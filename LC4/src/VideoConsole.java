@@ -1,12 +1,12 @@
-import java.awt.image.BufferedImageOp;
-import java.awt.Graphics;
-import javax.swing.event.TableModelEvent;
-import java.awt.Graphics2D;
 import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
-import javax.swing.event.TableModelListener;
+
 import javax.swing.JPanel;
+import javax.swing.event.TableModelEvent;
+import javax.swing.event.TableModelListener;
 
 // 
 // Decompiled by Procyon v0.5.30
@@ -14,7 +14,7 @@ import javax.swing.JPanel;
 
 public class VideoConsole extends JPanel implements TableModelListener
 {
-    private BufferedImage image;
+	private BufferedImage image;
     private static final int NROWS = 124;
     private static final int NCOLS = 128;
     private static final int SCALING = 2;

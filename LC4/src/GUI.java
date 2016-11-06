@@ -150,12 +150,12 @@ public class GUI implements ActionListener, TableModelListener {
 	private void generateLc4Graph() {
 		lc4Graph = new LC4Graph();
 		lc4Graph.init(this.mac);
-        JFrame frame = new JFrame();
-        frame.getContentPane().add(lc4Graph);
-        frame.setTitle("JGraphT Adapter to JGraph Demo");
-        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-        frame.pack();
-        frame.setVisible(true);
+//        JFrame frame = new JFrame();
+//        frame.getContentPane().add(lc4Graph);
+//        frame.setTitle("JGraphT Adapter to JGraph Demo");
+//        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+//        frame.pack();
+//        frame.setVisible(true);
 	}
 
 	public void loadSourceFile(final String s) {
@@ -365,7 +365,7 @@ public class GUI implements ActionListener, TableModelListener {
 	}
 
 	public GUI(final Machine mac, final CommandLine commandLine) {
-		this.frame = new JFrame("PennSim - " + PennSim.version + " - " + PennSim.getISA() + " | edited by Henry Zhu");
+		this.frame = new JFrame("PennSim Debugger - " + PennSim.version + " - " + PennSim.getISA() + " | edited by Henry Zhu");
 		this.dataPathFrame = new JFrame("PennSim - " + PennSim.version + " - " + PennSim.getISA());
 		this.fileChooser = new JFileChooser(".");
 		this.menuBar = new JMenuBar();

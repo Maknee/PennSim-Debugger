@@ -1,5 +1,5 @@
-import java.io.IOException;
 import java.io.BufferedOutputStream;
+import java.io.IOException;
 
 // 
 // Decompiled by Procyon v0.5.30
@@ -8,6 +8,10 @@ import java.io.BufferedOutputStream;
 public class Word
 {
     private int value;
+    
+    public Word clone() {
+    	return new Word(this.value);
+    }
     
     public Word(final int value) {
         this.setValue(value);

@@ -29,16 +29,18 @@ public class RegisterFile extends AbstractTableModel
     private Word savedPSR;
     private Word savedMCR;
     private Word[] savedregArr;
-    private boolean savedrecentlyWritten;
     private int savedrecentlyWrittenValue;
     private int savedrecentlyWrittenRegister;
     private boolean savedNZPRecentlyWritten;
     
     public void pushad() {
-    	this.savedPC = PC;
-    	this.savedPSR = PSR;
-    	this.savedMCR = MCR;
-    	this.savedregArr = regArr;
+    	this.savedPC = PC.clone();
+    	this.savedPSR = PSR.clone();
+    	this.savedMCR = MCR.clone();
+    	this.savedregArr = new Word[regArr.length];
+    	for(int i = 0; i < regArr.length; i++) {
+    		savedregArr[i] = regArr[i].clone();
+    	}
     	this.savedrecentlyWrittenValue = recentlyWrittenValue;
     	this.savedrecentlyWrittenRegister = recentlyWrittenRegister;
     	this.savedNZPRecentlyWritten = NZPRecentlyWritten;
@@ -52,6 +54,7 @@ public class RegisterFile extends AbstractTableModel
     	this.recentlyWrittenValue = savedrecentlyWrittenValue;
     	this.recentlyWrittenRegister = savedrecentlyWrittenRegister;
     	this.NZPRecentlyWritten = savedNZPRecentlyWritten;
+    	this.fireTableDataChanged();
     }
     
     public RegisterFile(final Machine machine) {
