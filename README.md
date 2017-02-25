@@ -46,6 +46,10 @@ By default the extra functionality is disabled.
 Can be found at lower right of the screen:
 ![Screenshot Buttons](https://i.gyazo.com/614b594d5628eb2d18eab04c667ed250.png)
 
+# Known Bugs
+* Generating the flow chart may screw up register values. Make sure to reset the program after generating the flow chart.
+* Toggling breakpoints in memory dump does not work (Very glitchy, so I disabled)
+
 ## Contributors
 Henry Zhu
 
@@ -63,7 +67,3 @@ Henry Zhu
 
 ## Contact
 * e-mail: henryzhu@seas.upenn.edu
-
-# Known Bugs
-* Generating the flow chart may screw up register values. Make sure to reset the program after generating the flow chart.
-* Toggling breakpoints in memory dump does not work (Very glitchy, so I disabled)
