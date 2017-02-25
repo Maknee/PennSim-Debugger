@@ -56,7 +56,7 @@ Henry Zhu
 * JAVA SWING :))))))
 
 ## License 
-* see [LICENSE](https://github.com/Maknee/PennSim-Debugger/LICENSE.md)
+* see [LICENSE](https://github.com/Maknee/PennSim-Debugger/LICENSE.txt)
 
 ## Version 
 * Version 0.1
@@ -66,3 +66,4 @@ Henry Zhu
 
 # Known Bugs
 * Generating the flow chart may screw up register values. Make sure to reset the program after generating the flow chart.
+* Toggling breakpoints in memory dump does not work (Very glitchy, so I disabled)
