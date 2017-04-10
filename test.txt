@@ -1,0 +1,4 @@
+reset
+as test test
+ld test
+set PC 0
