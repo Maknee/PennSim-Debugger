@@ -14,7 +14,7 @@ import javax.swing.SwingUtilities;
 // Decompiled by Procyon v0.5.30
 // 
 
-public class Machine implements Runnable
+public class Machine implements Runnable, Cloneable
 {
     private Memory memory;
     private RegisterFile registers;

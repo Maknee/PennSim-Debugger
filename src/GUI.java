@@ -139,6 +139,9 @@ public class GUI implements ActionListener, TableModelListener {
 	private LC4Graph lc4Graph;
 	private final JButton lc4Button;
 
+	private LC4Disassembler lc4Diassembler;
+	private final JButton lc4DisassemblerButton;
+	
 	private void setupDataPathPanel() {
 		this.dataPathPanel.setLayout(new BoxLayout(this.dataPathPanel, 2));
 		this.dataPathPanel.add(this.dataPath);
@@ -156,6 +159,12 @@ public class GUI implements ActionListener, TableModelListener {
 //        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
 //        frame.pack();
 //        frame.setVisible(true);
+	}
+	
+	private void generateLC4Diassembly()
+	{
+		lc4Diassembler = new LC4Disassembler(this.mac);
+
 	}
 
 	public void loadSourceFile(final String s) {
@@ -362,6 +371,10 @@ public class GUI implements ActionListener, TableModelListener {
 		this.lc4Button.setActionCommand("generate graph");
 		this.lc4Button.addActionListener(this);
 		
+		stackPanel.add(lc4DisassemblerButton);
+		this.lc4DisassemblerButton.setActionCommand("disassemble lc4");
+		this.lc4DisassemblerButton.addActionListener(this);
+		
 	}
 
 	public GUI(final Machine mac, final CommandLine commandLine) {
@@ -394,7 +407,8 @@ public class GUI implements ActionListener, TableModelListener {
 		this.dataPathButton = new JButton("Open DataPath Chart");
 
 		this.lc4Button = new JButton("Generate Flow Chart/Graph/How your code looks like");
-		
+		this.lc4DisassemblerButton = new JButton("Diassemble LC4");
+
 		this.aboutButton = new JButton("About/Report Issue");
 
 		this.breakpointsAndStackPanel = new JPanel(new BorderLayout());
@@ -863,6 +877,8 @@ public class GUI implements ActionListener, TableModelListener {
 					}
 				} else if ("generate graph".equals(actionEvent.getActionCommand())) {
 					this.generateLc4Graph();
+				} else if ("disassemble lc4".equals(actionEvent.getActionCommand())) {
+					this.generateLC4Diassembly();
 				}
 			}
 		} catch (ExceptionException ex) {

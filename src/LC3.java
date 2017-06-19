@@ -39,6 +39,11 @@ public class LC3 extends ISA
             }
         	
         	@Override
+        	public boolean isNop() {
+        		return true;
+        	}
+        	
+        	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 return n + 1;
             }
@@ -65,6 +70,11 @@ public class LC3 extends ISA
                 signals.NZPWE = 1;
                 signals.DATAWE = 0;
                 return signals;
+            }
+        	
+        	@Override
+            public boolean isAdd() {
+            	return true;
             }
         	
            	@Override
@@ -99,6 +109,11 @@ public class LC3 extends ISA
                 return signals;
             }
         	
+        	@Override
+            public boolean isMul() {
+            	return true;
+            }
+        	
            	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 final int nzp = registerFile.getRegister(this.getSReg(word)) * registerFile.getRegister(this.getTReg(word));
@@ -131,6 +146,11 @@ public class LC3 extends ISA
                 return signals;
             }
         	
+        	@Override
+            public boolean isSub() {
+            	return true;
+            }
+        	
            	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 final int nzp = registerFile.getRegister(this.getSReg(word)) - registerFile.getRegister(this.getTReg(word));
@@ -161,6 +181,11 @@ public class LC3 extends ISA
                 signals.NZPWE = 1;
                 signals.DATAWE = 0;
                 return signals;
+            }
+        	
+        	@Override
+            public boolean isDiv() {
+            	return true;
             }
         	
            	@Override
@@ -200,6 +225,11 @@ public class LC3 extends ISA
                 return signals;
             }
         	
+        	@Override
+            public boolean isAddIMM() {
+            	return true;
+            }
+        	
            	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 final int nzp = registerFile.getRegister(this.getSReg(word)) + this.getSignedImmed(word);
@@ -230,6 +260,11 @@ public class LC3 extends ISA
                 signals.NZPWE = 1;
                 signals.DATAWE = 0;
                 return signals;
+            }
+        	
+        	@Override
+            public boolean isCMP() {
+            	return true;
             }
         	
            	@Override
@@ -272,6 +307,11 @@ public class LC3 extends ISA
                 return signals;
             }
         	
+        	@Override
+            public boolean isCMPU() {
+            	return true;
+            }
+        	
            	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 final int register = registerFile.getRegister(this.getSReg(word));
@@ -310,6 +350,11 @@ public class LC3 extends ISA
                 signals.NZPWE = 1;
                 signals.DATAWE = 0;
                 return signals;
+            }
+        	
+        	@Override
+            public boolean isCMPI() {
+            	return true;
             }
         	
            	@Override
@@ -352,6 +397,11 @@ public class LC3 extends ISA
                 return signals;
             }
         	
+        	@Override
+            public boolean isCMPIU() {
+            	return true;
+            }
+        	
            	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 final int register = registerFile.getRegister(this.getSReg(word));
@@ -392,6 +442,11 @@ public class LC3 extends ISA
                 return signals;
             }
         	
+        	@Override
+            public boolean isJSRR() {
+                return true;
+            }
+        	
            	@Override
             public boolean isCall() {
                 return true;
@@ -429,6 +484,11 @@ public class LC3 extends ISA
                 return signals;
             }
         	
+        	@Override
+        	public boolean isJSR() {
+        		return true;
+        	}
+        	
            	@Override
             public boolean isCall() {
                 return true;
@@ -465,6 +525,11 @@ public class LC3 extends ISA
                 return signals;
             }
         	
+        	@Override
+            public boolean isAnd() {
+            	return true;
+            }
+        	
            	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 final int nzp = registerFile.getRegister(this.getSReg(word)) & registerFile.getRegister(this.getTReg(word));
@@ -495,6 +560,11 @@ public class LC3 extends ISA
                 signals.NZPWE = 1;
                 signals.DATAWE = 0;
                 return signals;
+            }
+        	
+        	@Override
+            public boolean isNot() {
+            	return true;
             }
         	
            	@Override
@@ -529,6 +599,11 @@ public class LC3 extends ISA
                 return signals;
             }
         	
+        	@Override
+            public boolean isOr() {
+            	return true;
+            }
+        	
            	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 final int nzp = registerFile.getRegister(this.getSReg(word)) | registerFile.getRegister(this.getTReg(word));
@@ -559,6 +634,11 @@ public class LC3 extends ISA
                 signals.NZPWE = 1;
                 signals.DATAWE = 0;
                 return signals;
+            }
+        	
+        	@Override
+            public boolean isXor() {
+            	return true;
             }
         	
            	@Override
@@ -593,6 +673,11 @@ public class LC3 extends ISA
                 return signals;
             }
         	
+        	@Override
+            public boolean isAndIMM() {
+            	return true;
+            }
+        	
            	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 final int nzp = registerFile.getRegister(this.getSReg(word)) & this.getSignedImmed(word);
@@ -623,6 +708,11 @@ public class LC3 extends ISA
                 signals.NZPWE = 1;
                 signals.DATAWE = 0;
                 return signals;
+            }
+        	
+        	@Override
+            public boolean isLdr() {
+            	return true;
             }
         	
            	@Override
@@ -697,6 +787,12 @@ public class LC3 extends ISA
                 return signals;
             }
         	
+        	@Override
+        	public boolean isRet()
+        	{
+        		return true;
+        	}
+        	
            	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) throws IllegalInstructionException {
                 if (registerFile.getPrivMode()) {
@@ -728,6 +824,11 @@ public class LC3 extends ISA
                 signals.NZPWE = 1;
                 signals.DATAWE = 0;
                 return signals;
+            }
+        	
+        	@Override
+            public boolean isConst() {
+            	return true;
             }
         	
            	@Override
@@ -762,6 +863,11 @@ public class LC3 extends ISA
                 return signals;
             }
         	
+        	@Override
+            public boolean isConstIMM() {
+            	return true;
+            }
+        	
            	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 final int signedImmed = this.getSignedImmed(word);
@@ -792,6 +898,11 @@ public class LC3 extends ISA
                 signals.NZPWE = 1;
                 signals.DATAWE = 0;
                 return signals;
+            }
+        	
+        	@Override
+            public boolean isSLL() {
+            	return true;
             }
         	
            	@Override
@@ -826,6 +937,11 @@ public class LC3 extends ISA
                 return signals;
             }
         	
+        	@Override
+            public boolean isSRA() {
+            	return true;
+            }
+        	
            	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 final int nzp = (short)registerFile.getRegister(this.getSReg(word)) >> this.getUnsignedImmed(word);
@@ -858,6 +974,11 @@ public class LC3 extends ISA
                 return signals;
             }
         	
+        	@Override
+            public boolean isSRL() {
+            	return true;
+            }
+        	
            	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 final int nzp = registerFile.getRegister(this.getSReg(word)) >>> this.getUnsignedImmed(word);
@@ -888,6 +1009,11 @@ public class LC3 extends ISA
                 signals.NZPWE = 1;
                 signals.DATAWE = 0;
                 return signals;
+            }
+        	
+        	@Override
+            public boolean isMod() {
+            	return true;
             }
         	
            	@Override
@@ -927,6 +1053,11 @@ public class LC3 extends ISA
             }
         	
         	@Override
+        	public boolean isJumpR() {
+        		return true;
+        	}
+        	
+        	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 return registerFile.getRegister(this.getDReg(word));
             }
@@ -954,6 +1085,11 @@ public class LC3 extends ISA
                 signals.DATAWE = 0;
                 return signals;
             }
+        	
+        	@Override
+        	public boolean isRet() {
+        		return true;
+        	}
         	
         	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
@@ -985,6 +1121,11 @@ public class LC3 extends ISA
             }
         	
         	@Override
+        	public boolean isJump() {
+        		return true;
+        	}
+        	
+        	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 return n + 1 + this.getPCOffset(word);
             }
@@ -1011,6 +1152,11 @@ public class LC3 extends ISA
                 signals.NZPWE = 1;
                 signals.DATAWE = 0;
                 return signals;
+            }
+        	
+        	@Override
+            public boolean isHiConst() {
+            	return true;
             }
         	
         	@Override
@@ -1046,6 +1192,11 @@ public class LC3 extends ISA
             }
         	
         	@Override
+            public boolean isHiConst() {
+            	return true;
+            }
+        	
+        	@Override
             public int execute(final Word word, final int n, final RegisterFile registerFile, final Memory memory, final Machine machine) {
                 final int nzp = (registerFile.getRegister(this.getDReg(word)) & 0xFF) | this.getUnsignedImmed(word) << 8;
                 registerFile.setRegister(this.getDReg(word), nzp);
@@ -1076,6 +1227,11 @@ public class LC3 extends ISA
                 signals.DATAWE = 0;
                 return signals;
             }
+        	
+        	@Override
+        	public boolean isTRAP() {
+        		return true;
+        	}
         	
             @Override
             public boolean isCall() {

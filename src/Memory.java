@@ -218,6 +218,12 @@ public class Memory extends AbstractTableModel
         return read;
     }
     
+    //This returns no exception when reading memory
+    public Word checkAndReadNoException(final int n)
+    {
+        return this.read(n);
+    }
+    
     public Word checkAndFetch(final int n, final boolean b) throws IllegalMemAccessException {
         if (!this.checkAddrPriv(n, b)) {
             throw new IllegalMemAccessException(n, b);

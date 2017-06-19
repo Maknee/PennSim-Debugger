@@ -5,11 +5,12 @@ import java.io.IOException;
 // Decompiled by Procyon v0.5.30
 // 
 
-public class Word
+public class Word implements Cloneable
 {
     private int value;
     
-    public Word clone() {
+    @Override
+    public Word clone() throws CloneNotSupportedException  {
     	return new Word(this.value);
     }
     

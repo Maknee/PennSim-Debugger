@@ -3,6 +3,7 @@ import java.awt.Dimension;
 import java.awt.Graphics;
 import java.awt.Graphics2D;
 import java.awt.image.BufferedImage;
+import java.awt.image.VolatileImage;
 
 import javax.swing.JPanel;
 import javax.swing.event.TableModelEvent;
@@ -12,6 +13,7 @@ import javax.swing.event.TableModelListener;
 // Decompiled by Procyon v0.5.30
 // 
 
+@SuppressWarnings("serial")
 public class VideoConsole extends JPanel implements TableModelListener
 {
 	private BufferedImage image;
@@ -32,6 +34,7 @@ public class VideoConsole extends JPanel implements TableModelListener
         this.mac = mac;
         this.image = new BufferedImage(256, 248, 9);
         final Graphics2D graphics = this.image.createGraphics();
+        this.image.setAccelerationPriority(1.0f);
         graphics.setColor(Color.black);
         graphics.fillRect(0, 0, 256, 248);
     }

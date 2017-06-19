@@ -1,9 +1,5 @@
 import javax.swing.table.AbstractTableModel;
 
-// 
-// Decompiled by Procyon v0.5.30
-// 
-
 public class RegisterFile extends AbstractTableModel
 {
     public static final int NUM_REGISTERS = 8;
@@ -16,7 +12,7 @@ public class RegisterFile extends AbstractTableModel
     private Word PC;
     private Word PSR;
     private Word MCR;
-    private Word[] regArr;
+    public Word[] regArr;
     private static String[] indNames;
     private static int[] indRow;
     private static int[] indCol;
@@ -32,18 +28,24 @@ public class RegisterFile extends AbstractTableModel
     private int savedrecentlyWrittenValue;
     private int savedrecentlyWrittenRegister;
     private boolean savedNZPRecentlyWritten;
-    
+
     public void pushad() {
-    	this.savedPC = PC.clone();
-    	this.savedPSR = PSR.clone();
-    	this.savedMCR = MCR.clone();
-    	this.savedregArr = new Word[regArr.length];
-    	for(int i = 0; i < regArr.length; i++) {
-    		savedregArr[i] = regArr[i].clone();
-    	}
-    	this.savedrecentlyWrittenValue = recentlyWrittenValue;
-    	this.savedrecentlyWrittenRegister = recentlyWrittenRegister;
-    	this.savedNZPRecentlyWritten = NZPRecentlyWritten;
+    	try {
+			this.savedPC = PC.clone();
+	    	this.savedPSR = PSR.clone();
+	    	this.savedMCR = MCR.clone();
+	    	this.savedregArr = new Word[regArr.length];
+	    	for(int i = 0; i < regArr.length; i++) {
+	    		savedregArr[i] = regArr[i].clone();
+	    	}
+	    	this.savedrecentlyWrittenValue = recentlyWrittenValue;
+	    	this.savedrecentlyWrittenRegister = recentlyWrittenRegister;
+	    	this.savedNZPRecentlyWritten = NZPRecentlyWritten;
+	    	this.fireTableDataChanged();
+		} catch (CloneNotSupportedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
     }
     
     public void popad() {

@@ -51,6 +51,26 @@ public abstract class InstructionDef
         throw new AsException("Expanding a non-pseudo instruction");
     }
     
+    public boolean isCMP() {
+    	return false;
+    }
+    
+    public boolean isCMPU() {
+    	return false;
+    }
+    
+    public boolean isCMPI() {
+    	return false;
+    }
+    
+    public boolean isCMPIU() {
+    	return false;
+    }
+    
+    public boolean isNop() {
+    	return false;
+    }
+    
     public boolean isPseudo() {
         return false;
     }
@@ -77,6 +97,102 @@ public abstract class InstructionDef
     
     public boolean isStore() {
         return false;
+    }
+    
+    public boolean isJump() {
+    	return false;
+    }
+    
+    public boolean isJSR () {
+    	return false;
+    }
+    
+    public boolean isJSRR() {
+    	return false;
+    }
+    
+    public boolean isJumpR() {
+    	return false;
+    }
+    
+    public boolean isTRAP () {
+    	return false;
+    }
+    
+    public boolean isRet() {
+    	return false;
+    }
+    
+    public boolean isAdd() {
+    	return false;
+    }
+    
+    public boolean isSub() {
+    	return false;
+    }
+    
+    public boolean isMul() {
+    	return false;
+    }
+    
+    public boolean isDiv() {
+    	return false;
+    }
+    
+    public boolean isAddIMM() {
+    	return false;
+    }
+    
+    public boolean isAnd() {
+    	return false;
+    }
+    
+    public boolean isNot() {
+    	return false;
+    }
+    
+    public boolean isOr() {
+    	return false;
+    }
+    
+    public boolean isXor() {
+    	return false;
+    }
+    
+    public boolean isAndIMM() {
+    	return false;
+    }
+    
+    public boolean isLdr() {
+    	return false;
+    }
+    
+    public boolean isConst() {
+    	return false;
+    }
+    
+    public boolean isConstIMM() {
+    	return false;
+    }
+    
+    public boolean isSLL() {
+    	return false;
+    }
+    
+    public boolean isSRA() {
+    	return false;
+    }
+    
+    public boolean isSRL() {
+    	return false;
+    }
+    
+    public boolean isMod() {
+    	return false;
+    }
+    
+    public boolean isHiConst() {
+    	return false;
     }
     
     public final String getOpcode() {

@@ -52,8 +52,8 @@ import com.jgraph.layout.hierarchical.JGraphHierarchicalLayout;
 /**
  * A demo applet that shows how to use JGraph to visualize JGraphT graphs.
  *
- * @author Barak Naveh
- * @since Aug 3, 2003
+ * @author Meh
+ * @since ??
  */
 
 public class LC4Graph
@@ -63,7 +63,7 @@ public class LC4Graph
     private static final Color DEFAULT_BG_COLOR = Color.decode("#FAFBFF");
     private static final Dimension DEFAULT_SIZE = new Dimension(800, 600);
 
-    //
+    //JGraph setup
     private JGraphModelAdapter<String, DefaultEdge> jgAdapter;
 
     /**
@@ -90,25 +90,43 @@ public class LC4Graph
         
         boolean called = false;
         int y = 40;
+
+        //Keep track of all the calls
         HashSet<String> calls = new HashSet<String>();
         String prevVertex = new String();
-        // that's all there is to it!..
+        
+        //Push everything onto the stack, so we can ensure everything is "safe" (registers still might get messed up...)
         mac.getRegisterFile().pushad();
+        
+        //attempt for 1000 instructions
         for(int i = 0; i < 1000; i++) {       
             try {
+            	//get the instruction
             	final Word checkAndFetch = mac.getMemory().checkAndFetch(mac.getRegisterFile().getPC(), mac.getRegisterFile().getPrivMode());
+            	//parse the instruction
             	InstructionDef instructionDef = ISA.lookupTable[checkAndFetch.getValue()];
             	
+            	//Check if the instruction is a call of branch
             	if(instructionDef.isCall() || instructionDef.isBranch()) {
+            		
+            		//uh... push on stack?
             		mac.getRegisterFile().pushad();
+            		
+            		//continue execute...
             		mac.executePumpedContinues(1);
+            		
+            		//dunno why
             		String functionLabel = mac.getSymTable().lookupAddr(mac.getRegisterFile().getPC());
+            		
+            		//perserve registers
             		mac.getRegisterFile().popad();
 //                    g.addVertex(instructionDef.getFormat());
 //
 //                    g.addEdge(instructionDef.getFormat(), v2);
 //                    g.addEdge(instructionDef.getFormat(), v3);
 //                    g.addEdge(instructionDef.getFormat(), v4);
+            		
+            		
             		String call = ISA.disassemble(checkAndFetch, mac.getRegisterFile().getPC(), mac);
             		
             		called = false;
