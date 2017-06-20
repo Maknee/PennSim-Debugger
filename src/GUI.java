@@ -457,6 +457,7 @@ public class GUI implements ActionListener, TableModelListener {
 		this.srcPanel = new JPanel(new BorderLayout());
 		this.srcText = new JTextArea();
 		this.srcScrollPane = new JScrollPane(this.srcText);
+		this.srcScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		this.mac = mac;
 		this.regTable = new JTable(mac.getRegisterFile());
 		final TableColumn column = this.regTable.getColumnModel().getColumn(0);
@@ -661,10 +662,12 @@ public class GUI implements ActionListener, TableModelListener {
 				return new HighlightScrollBar(mac);
 			}
 		};
+		this.memoryDumpScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+
 
 		this.memoryDumpScrollPane.getVerticalScrollBar()
 				.setBlockIncrement(this.memoryDumpTable.getModel().getRowCount() / 512);
-		this.memoryDumpScrollPane.getVerticalScrollBar().setUnitIncrement(1);
+//		this.memoryDumpScrollPane.getVerticalScrollBar().setUnitIncrement(1);
 
 		this.memScrollPane = new JScrollPane(this.memTable) {
 			@Override
@@ -672,8 +675,9 @@ public class GUI implements ActionListener, TableModelListener {
 				return new HighlightScrollBar(mac);
 			}
 		};
+		this.memScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		this.memScrollPane.getVerticalScrollBar().setBlockIncrement(this.memTable.getModel().getRowCount() / 512);
-		this.memScrollPane.getVerticalScrollBar().setUnitIncrement(1);
+//		this.memScrollPane.getVerticalScrollBar().setUnitIncrement(1);
 		final TableColumn column3 = this.memTable.getColumnModel().getColumn(0);
 		column3.setMaxWidth(20);
 		column3.setMinWidth(20);

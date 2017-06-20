@@ -1,3 +1,6 @@
+/*
+ * Assembly exception
+ */
 class AsException extends Exception
 {
     public Instruction insn;

@@ -8,6 +8,6 @@
 	<classpathentry kind="lib" path="lib/jgrapht-ext-1.0.0-uber.jar"/>
 	<classpathentry kind="lib" path="lib/jgraphx-2.0.0.1.jar"/>
 	<classpathentry kind="lib" path="lib/jgrapht-ext-1.0.0.jar"/>
-	<classpathentry kind="lib" path="C:/Users/Fatman/Desktop/LC4-STUFF/LC4/lib/jgraphx.jar"/>
+	<classpathentry kind="lib" path="/Users/xuerui/Desktop/Github/PennSim-Debugger/lib/jgraphx.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

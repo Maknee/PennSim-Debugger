@@ -2,6 +2,8 @@
 // Decompiled by Procyon v0.5.30
 // 
 
+//nzp variable should be named "result"
+
 public class LC3 extends ISA
 {
     public void init() {
