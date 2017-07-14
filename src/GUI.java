@@ -50,8 +50,14 @@ import javax.swing.text.DefaultHighlighter;
 // 
 
 public class GUI implements ActionListener, TableModelListener {
+	
 	private final Machine mac;
 	public static String LOOKANDFEEL;
+	
+	/**
+	 * Handles to menu options
+	 */
+	
 	private final JFrame frame;
 	private final JFileChooser fileChooser;
 	private final JMenuBar menuBar;
@@ -61,25 +67,17 @@ public class GUI implements ActionListener, TableModelListener {
 	private final JMenuItem quitItem;
 	private final JMenuItem commandItem;
 	private final JMenuItem versionItem;
-	private final String openActionCommand = "Open";
-	private final String quitActionCommand = "Quit";
-	private final String openCOWActionCommand = "OutputWindow";
-	private final String versionActionCommand = "Version";
-	private final JPanel leftPanel;
+	
+	/**
+	 * Handles to panels of the main menu
+	 */
+	
 	private final JPanel controlPanel;
-	private final JButton nextButton;
-	private final String nextButtonCommand = "Next";
-	private final JButton stepButton;
-	private final String stepButtonCommand = "Step";
-	private final JButton continueButton;
-	private final String continueButtonCommand = "Continue";
-	private final JButton finishButton;
-	private final String finishButtonCommand = "Finish";
-	private final JButton stopButton;
-	private final String stopButtonCommand = "Stop";
-	private final String statusLabelRunning = "    Running ";
-	private final String statusLabelSuspended = "Suspended ";
-	private final String statusLabelHalted = "       Halted ";
+	
+	/**
+	 * Command line
+	 */
+	
 	private final JLabel statusLabel;
 	private final Color runningColor;
 	private final Color suspendedColor;
@@ -87,58 +85,131 @@ public class GUI implements ActionListener, TableModelListener {
 	private final JTable regTable;
 	private final CommandLinePanel commandPanel;
 	private final CommandOutputWindow commandOutputWindow;
-
+	
+	/**
+	 * Breakpoints panel
+	 */
+	
+	private final JPanel dumpAndBreakpointsPanel;
+	private final JPanel breakpointsPanel;
+	private final JPanel breakpointsAndStackPanel;
+	
+	/**
+	 * Memory dump
+	 */
+	
+	private final JPanel memoryDumpPanel;
 	private final JPanel memoryDumpAndGoToPanel;
 	private JTextField gotoDumpText;
 	private final JButton gotoDumpButton;
-
+	
 	private final JPanel memoryAndGoToPanel;
 	private JTextField gotoText;
 	private final JButton gotoButton;
-
-	private final JPanel dumpAndBreakpointsPanel;
-	private final JPanel breakpointsPanel;
-	private final JPanel memoryDumpPanel;
-	private final JPanel stackPanel;
-	private final JPanel breakpointsAndStackPanel;
-
+	
+	/**
+	 * Memory Panel
+	 */
+	
 	private final JPanel memoryPanel;
 	private final JTable memTable;
 	private final JScrollPane memScrollPane;
 	public static final Color BreakPointColor;
 	public static final Color PCColor;
-	private final JPanel devicePanel;
+	
+	/**
+	 * Stack
+	 */
+	
+	private final JPanel stackPanel;
+	private JTextArea stackText;
+	
+	/**
+	 * Registers
+	 */
+	
 	private final JPanel registerPanel;
+	
+	/**
+	 * Devices
+	 */
+	
+	private final JPanel devicePanel;
 	private final TextConsolePanel ioPanel;
 	private final VideoConsole video;
 	private final JPanel srcPanel;
 	private final JTextArea srcText;
 	private final JScrollPane srcScrollPane;
+	
+	/**
+	 * Datapath button
+	 */
+	
 	private final DataPath dataPath;
-
 	private final JPanel dataPathPanel;
 	private final JFrame dataPathFrame;
 	private final JButton dataPathButton;
 	public ControlSignals signals;
+	
+	/**
+	 * Handles to menu buttons
+	 */
+	
+	private final JButton nextButton;
+	private final JButton stepButton;
+	private final JButton continueButton;
+	private final JButton finishButton;
+	private final JButton stopButton;
+	
+	/**
+	 * Const strings (mostly for callback commands)
+	 */
+	private final String openActionCommand = "Open";
+	private final String quitActionCommand = "Quit";
+	private final String outputWindowActionCommand = "OutputWindow";
+	private final String versionActionCommand = "Version";
+	private final String nextButtonCommand = "Next";
+	private final String stepButtonCommand = "Step";
+	private final String continueButtonCommand = "Continue";
+	private final String finishButtonCommand = "Finish";
+	private final String stopButtonCommand = "Stop";
+	private final String statusLabelRunning = "    Running ";
+	private final String statusLabelSuspended = "Suspended ";
+	private final String statusLabelHalted = "       Halted ";
 
 	private JTextArea breakpointsText;
-	private JTextArea stackText;
 	private JTable memoryDumpTable;
 	private JScrollPane memoryDumpScrollPane;
 
 	private final JToggleButton toggleUpdateButton;
 	private final JToggleButton toggleColorButton;
 
+	/**
+	 * Pop up frame that displays the opcodes for instructions
+	 */
+	
 	private final JFrame opcodeFrame;
 	private final JPanel opcodePanel;
 	private JTextField opcodeText;
 	private boolean addedOpcodeListener = false;
+	
+	/**
+	 * About button
+	 */
 
 	private JButton aboutButton;
+	
+	/**
+	 * Simple graph
+	 */
 	
 	private LC4Graph lc4Graph;
 	private final JButton lc4Button;
 
+	/**
+	 * Disassembler/Grapher
+	 */
+	
 	private LC4Disassembler lc4Diassembler;
 	private final JButton lc4DisassemblerButton;
 	
@@ -245,19 +316,19 @@ public class GUI implements ActionListener, TableModelListener {
 		this.controlPanel.setLayout(new BoxLayout(this.controlPanel, 1));
 		final JPanel panel = new JPanel();
 		panel.setLayout(new GridLayout(1, 7));
-		this.nextButton.setActionCommand("Next");
+		this.nextButton.setActionCommand(nextButtonCommand);
 		this.nextButton.addActionListener(this);
 		panel.add(this.nextButton);
-		this.stepButton.setActionCommand("Step");
+		this.stepButton.setActionCommand(stepButtonCommand);
 		this.stepButton.addActionListener(this);
 		panel.add(this.stepButton);
-		this.continueButton.setActionCommand("Continue");
+		this.continueButton.setActionCommand(continueButtonCommand);
 		this.continueButton.addActionListener(this);
 		panel.add(this.continueButton);
-		this.finishButton.setActionCommand("Finish");
+		this.finishButton.setActionCommand(finishButtonCommand);
 		this.finishButton.addActionListener(this);
 		panel.add(this.finishButton);
-		this.stopButton.setActionCommand("Stop");
+		this.stopButton.setActionCommand(stopButtonCommand);
 		this.stopButton.addActionListener(this);
 		panel.add(this.stopButton);
 		this.setStatusLabelSuspended();
@@ -388,13 +459,12 @@ public class GUI implements ActionListener, TableModelListener {
 		this.quitItem = new JMenuItem("Quit");
 		this.commandItem = new JMenuItem("Open Command Output Window");
 		this.versionItem = new JMenuItem("Simulator Version");
-		this.leftPanel = new JPanel();
 		this.controlPanel = new JPanel();
-		this.nextButton = new JButton("Next");
-		this.stepButton = new JButton("Step");
-		this.continueButton = new JButton("Continue");
-		this.finishButton = new JButton("Finish");
-		this.stopButton = new JButton("Stop");
+		this.nextButton = new JButton(nextButtonCommand);
+		this.stepButton = new JButton(stepButtonCommand);
+		this.continueButton = new JButton(continueButtonCommand);
+		this.finishButton = new JButton(finishButtonCommand);
+		this.stopButton = new JButton(stopButtonCommand);
 		
 		this.memoryAndGoToPanel = new JPanel(new BorderLayout());
 		this.gotoText = new JTextField();
@@ -457,6 +527,7 @@ public class GUI implements ActionListener, TableModelListener {
 		this.srcPanel = new JPanel(new BorderLayout());
 		this.srcText = new JTextArea();
 		this.srcScrollPane = new JScrollPane(this.srcText);
+		this.srcScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		this.mac = mac;
 		this.regTable = new JTable(mac.getRegisterFile());
 		final TableColumn column = this.regTable.getColumnModel().getColumn(0);
@@ -664,7 +735,7 @@ public class GUI implements ActionListener, TableModelListener {
 
 		this.memoryDumpScrollPane.getVerticalScrollBar()
 				.setBlockIncrement(this.memoryDumpTable.getModel().getRowCount() / 512);
-		this.memoryDumpScrollPane.getVerticalScrollBar().setUnitIncrement(1);
+		this.memoryDumpScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 
 		this.memScrollPane = new JScrollPane(this.memTable) {
 			@Override
@@ -673,7 +744,7 @@ public class GUI implements ActionListener, TableModelListener {
 			}
 		};
 		this.memScrollPane.getVerticalScrollBar().setBlockIncrement(this.memTable.getModel().getRowCount() / 512);
-		this.memScrollPane.getVerticalScrollBar().setUnitIncrement(1);
+		this.memScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		final TableColumn column3 = this.memTable.getColumnModel().getColumn(0);
 		column3.setMaxWidth(20);
 		column3.setMinWidth(20);
@@ -747,17 +818,17 @@ public class GUI implements ActionListener, TableModelListener {
 				return "*.obj";
 			}
 		});
-		this.openItem.setActionCommand("Open");
+		this.openItem.setActionCommand(openActionCommand);
 		this.openItem.addActionListener(this);
 		this.fileMenu.add(this.openItem);
-		this.commandItem.setActionCommand("OutputWindow");
+		this.commandItem.setActionCommand(outputWindowActionCommand);
 		this.commandItem.addActionListener(this);
 		this.fileMenu.add(this.commandItem);
 		this.fileMenu.addSeparator();
-		this.quitItem.setActionCommand("Quit");
+		this.quitItem.setActionCommand(quitActionCommand);
 		this.quitItem.addActionListener(this);
 		this.fileMenu.add(this.quitItem);
-		this.versionItem.setActionCommand("Version");
+		this.versionItem.setActionCommand(versionActionCommand);
 		this.versionItem.addActionListener(this);
 		this.aboutMenu.add(this.versionItem);
 		this.menuBar.add(this.fileMenu);
@@ -837,22 +908,22 @@ public class GUI implements ActionListener, TableModelListener {
 			try {
 				this.scrollToIndex(Integer.parseInt(actionEvent.getActionCommand()));
 			} catch (NumberFormatException ex2) {
-				if ("Next".equals(actionEvent.getActionCommand())) {
+				if (nextButtonCommand.equals(actionEvent.getActionCommand())) {
 					this.mac.executeNext();
-				} else if ("Step".equals(actionEvent.getActionCommand())) {
+				} else if (stepButtonCommand.equals(actionEvent.getActionCommand())) {
 					this.mac.executeStep();
-				} else if ("Continue".equals(actionEvent.getActionCommand())) {
+				} else if (continueButtonCommand.equals(actionEvent.getActionCommand())) {
 					this.mac.executeMany();
-				} else if ("Finish".equals(actionEvent.getActionCommand())) {
+				} else if (finishButtonCommand.equals(actionEvent.getActionCommand())) {
 					this.mac.executeFin();
-				} else if ("Quit".equals(actionEvent.getActionCommand())) {
+				} else if (quitActionCommand.equals(actionEvent.getActionCommand())) {
 					this.confirmExit();
-				} else if ("Stop".equals(actionEvent.getActionCommand())) {
+				} else if (stopButtonCommand.equals(actionEvent.getActionCommand())) {
 					Console.println(this.mac.stopExecution(true));
-				} else if ("OutputWindow".equals(actionEvent.getActionCommand())) {
+				} else if (outputWindowActionCommand.equals(actionEvent.getActionCommand())) {
 					this.commandOutputWindow.setVisible(true);
-				} else if ("Version".equals(actionEvent.getActionCommand())) {
-					JOptionPane.showMessageDialog(this.frame, PennSim.getVersion(), "Version", 1);
+				} else if (versionActionCommand.equals(actionEvent.getActionCommand())) {
+					JOptionPane.showMessageDialog(this.frame, PennSim.getVersion(), versionActionCommand, 1);
 				} else if ("DataPath".equals(actionEvent.getActionCommand())) {
 					if (!this.dataPathFrame.isVisible())
 						this.dataPathFrame.setVisible(true);
@@ -924,17 +995,17 @@ public class GUI implements ActionListener, TableModelListener {
 	}
 
 	public void setStatusLabelRunning() {
-		this.statusLabel.setText("    Running ");
+		this.statusLabel.setText(statusLabelRunning);
 		this.statusLabel.setForeground(this.runningColor);
 	}
 
 	public void setStatusLabelSuspended() {
-		this.statusLabel.setText("Suspended ");
+		this.statusLabel.setText(statusLabelSuspended);
 		this.statusLabel.setForeground(this.suspendedColor);
 	}
 
 	public void setStatusLabelHalted() {
-		this.statusLabel.setText("       Halted ");
+		this.statusLabel.setText(statusLabelHalted);
 		this.statusLabel.setForeground(this.haltedColor);
 	}
 

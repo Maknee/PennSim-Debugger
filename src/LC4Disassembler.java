@@ -1,9 +1,18 @@
+import java.awt.BasicStroke;
 import java.awt.BorderLayout;
+import java.awt.Button;
+import java.awt.Color;
+import java.awt.Component;
+import java.awt.Cursor;
 import java.awt.Dimension;
+import java.awt.Graphics;
+import java.awt.Graphics2D;
 import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.awt.event.MouseListener;
+import java.awt.event.MouseMotionListener;
 import java.awt.event.MouseWheelEvent;
 import java.security.KeyStore.Entry;
 import java.util.AbstractMap;
@@ -17,8 +26,11 @@ import java.util.Queue;
 import java.util.Stack;
 
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 
@@ -37,14 +49,31 @@ import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxStylesheet;
 
 public class LC4Disassembler extends JFrame{
-	/**
-	 * 
-	 */
-	
+
 	//static variables
 	Machine mac;
 	mxGraph graph;
-	Object parent;
+	Object graphParent;
+	
+	/**
+	 * Components (GUI stuff)
+	 */
+	
+	JSplitPane mainSplitPanel;
+	
+	//Left panel of the split
+	JPanel mainLeftPanel;
+	
+	//Rightpanel of the split
+	//Contains:
+	//tabbing
+	//disassembly
+	JPanel mainRightPanel;
+	
+	JPanel tabPanel;
+	ClosableTabbedPane subroutinePane;
+	
+	JPanel disassemblyPanel;
 	
 	//Queue of instructions still needed to be parsed 
 	ArrayDeque<QueueBlock> queue = new ArrayDeque<QueueBlock>();
@@ -243,7 +272,7 @@ public class LC4Disassembler extends JFrame{
 			final int cellWidth = 200;
 			final int cellHeight = 30;
 			
-			vertex = graph.insertVertex(parent, null, "gggggg", 20, 20, cellWidth, cellHeight * instructionBlocks.size());
+			vertex = graph.insertVertex(graphParent, null, "gggggg", 20, 20, cellWidth, cellHeight * instructionBlocks.size());
 			
 			//padding for symbol (needs to offset each instruction in the block)
 			int symbolPadding = 0;
@@ -283,7 +312,7 @@ public class LC4Disassembler extends JFrame{
 	
 				System.out.println(Word.toHex(lastInstructionInBlock.pc, true) + " " + instructionString + " ---> " + Word.toHex(entry.getValue().pc));
 				
-				graph.insertEdge(parent, null, Word.toHex(lastInstructionInBlock.pc, true) + " " + instructionString , entry.getKey().vertex, entry.getValue().vertex);
+				graph.insertEdge(graphParent, null, Word.toHex(lastInstructionInBlock.pc, true) + " " + instructionString , entry.getKey().vertex, entry.getValue().vertex);
 			}
 		}
 	}
@@ -351,7 +380,7 @@ public class LC4Disassembler extends JFrame{
 					String instructionString = instructionDef.disassemble(lastInstructionInBlock.instruction, lastInstructionInBlock.pc, mac);
 
 					//Link this block to the next block
-					graph.insertEdge(parent, null, Word.toHex(lastInstructionInBlock.pc, true) + " " + instructionString , block.vertex, nextBlock.vertex);
+					graph.insertEdge(graphParent, null, Word.toHex(lastInstructionInBlock.pc, true) + " " + instructionString , block.vertex, nextBlock.vertex);
 				}
 				//draw remaining branches
 				block.drawRemainingBranches();
@@ -1391,7 +1420,7 @@ public class LC4Disassembler extends JFrame{
 
 	public LC4Disassembler(Machine mac)
 	{
-		super("Hello, World!");
+		super();
 		
 		init(mac);
 	}
@@ -1426,18 +1455,15 @@ public class LC4Disassembler extends JFrame{
 	
 	void init(Machine otherMac)
 	{
+		//keep a pointer to machine
 		this.mac = otherMac;
-				
-		this.setSize(640, 480);
-		this.setVisible(true);
 	
 		//Create graph
 		mxGraph graph = new mxGraph();
 		this.graph = graph;
 		
-		//get parent to graph
-		this.parent = this.graph.getDefaultParent();
-
+		//get graphParent to graph
+		this.graphParent = this.graph.getDefaultParent();
 		graph.getModel().beginUpdate();
 		
     	//Start with the first instruction to analyze based on the PC and continue from there...		
@@ -1447,36 +1473,92 @@ public class LC4Disassembler extends JFrame{
 		try
 		{
 			
-//			Object v1 = graph.insertVertex(parent, null, "Hello", 20, 20, 80,
+//			Object v1 = graph.insertVertex(graphParent, null, "Hello", 20, 20, 80,
 //					30);
-//			Object v2 = graph.insertVertex(parent, null, "World!", 240, 150,
+//			Object v2 = graph.insertVertex(graphParent, null, "World!", 240, 150,
 //					80, 30);
-//			Object v3 = graph.insertVertex(parent, null, "World!", 240, 150,
+//			Object v3 = graph.insertVertex(graphParent, null, "World!", 240, 150,
 //					80, 30);
-//			Object v4 = graph.insertVertex(parent, null, "World!", 240, 150,
+//			Object v4 = graph.insertVertex(graphParent, null, "World!", 240, 150,
 //					80, 30);
-//			Object v5 = graph.insertVertex(parent, null, "World!", 240, 150,
+//			Object v5 = graph.insertVertex(graphParent, null, "World!", 240, 150,
 //					80, 30);
-//			Object v6 = graph.insertVertex(parent, null, "World!", 240, 150,
+//			Object v6 = graph.insertVertex(graphParent, null, "World!", 240, 150,
 //					80, 30);
-//			graph.insertEdge(parent, null, "Edge", v1, v2);
-//			graph.insertEdge(parent, null, "Edge", v1, v3);
-//			graph.insertEdge(parent, null, "Edge", v1, v4);
-//			graph.insertEdge(parent, null, "Edge", v1, v5);
-//			graph.insertEdge(parent, null, "Edge", v5, v6);
-//			graph.insertEdge(parent, null, "Edge", v6, v5);
+//			graph.insertEdge(graphParent, null, "Edge", v1, v2);
+//			graph.insertEdge(graphParent, null, "Edge", v1, v3);
+//			graph.insertEdge(graphParent, null, "Edge", v1, v4);
+//			graph.insertEdge(graphParent, null, "Edge", v1, v5);
+//			graph.insertEdge(graphParent, null, "Edge", v5, v6);
+//			graph.insertEdge(graphParent, null, "Edge", v6, v5);
 
 			mxIGraphLayout layout = new ExtendedCompactTreeLayout(graph);
 
-			layout.execute(this.parent);
+			layout.execute(this.graphParent);
 		}
 		finally
 		{
 			graph.getModel().endUpdate();
 		}
 		
+		//Set properties of this JFrame
+		this.setMinimumSize(new Dimension(800, 600));
+		this.setVisible(true);
+		this.setLayout(new BorderLayout());
+		
+		//Function panel contains all the subroutines and other items
+		this.mainLeftPanel = new JPanel(new BorderLayout());
+		this.mainLeftPanel.setVisible(true);
+		
+		//Have the right panel hold the graph component and tabbing panel
+		this.mainRightPanel = new JPanel(new BorderLayout());
+		this.mainRightPanel.setVisible(true);
+		
+		//Tabbing window that keeps track of subroutines clicked
+		this.tabPanel = new JPanel(new BorderLayout());
+		this.tabPanel.setVisible(true);
+		
+		//Create subroutine pane
+		this.subroutinePane = new ClosableTabbedPane() {
+            public boolean tabAboutToClose(int tabIndex) {
+                String tab = subroutinePane.getTabTitleAt(tabIndex);
+                int choice = JOptionPane.showConfirmDialog(null, 
+                   "You are about to close '" + 
+                   tab + "'\nDo you want to proceed ?", 
+                   "Confirmation Dialog", 
+                   JOptionPane.INFORMATION_MESSAGE);
+                return choice == 0;
+                // if returned false tab
+                // closing will be canceled
+            }
+        };
+        this.subroutinePane.add("HI", new JPanel());
+		
+        //add the pane to the panel
+        this.tabPanel.add(subroutinePane, BorderLayout.CENTER);
+        
+        //Disassembly panel that contains graphs, etc
+		this.disassemblyPanel = new JPanel(new BorderLayout());
+		this.disassemblyPanel.setVisible(true);
+        
+		//Graph Component (Similar to JPanel (which is also a component))
 		mxGraphComponent graphComponent = new mxGraphComponent(graph);
-		getContentPane().add(graphComponent);
+
+		//add the graph to disassembly panel
+		this.disassemblyPanel.add(graphComponent, BorderLayout.CENTER);
+		
+		//Attach to right panel
+		this.mainRightPanel.add(tabPanel, BorderLayout.NORTH);
+		this.mainRightPanel.add(disassemblyPanel, BorderLayout.CENTER);
+		
+		//Create main split panel that contains left/right windows
+		this.mainSplitPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mainLeftPanel, mainRightPanel);
+		this.mainSplitPanel.setPreferredSize(new Dimension(800, 600));
+		this.mainSplitPanel.setVisible(true);
+		this.mainSplitPanel.setOneTouchExpandable(true);
+		this.mainSplitPanel.setDividerLocation(150);
+		
+		this.add(mainSplitPanel, "Center");
 	}
 	
 	//http://stackoverflow.com/questions/42487675/formatting-jgraphx-edges
@@ -1690,5 +1772,145 @@ public class LC4Disassembler extends JFrame{
         }
 
     };
+    
+    //https://www.codeproject.com/Articles/18496/JTabbedPane-with-Closing-Tabs
+    public class ClosableTabbedPane extends JTabbedPane{
+    	private TabCloseUI closeUI = new TabCloseUI(this);
+    	
+    	public void paint(Graphics g){
+    		super.paint(g);
+    		closeUI.paint(g);
+    	}
+    	
+    	public void addTab(String title, Component component) {
+    		super.addTab(title+"  ", component);
+    	}
+    	
+    	
+    	public String getTabTitleAt(int index) {
+    		return super.getTitleAt(index).trim();
+    	}
+    	
+    	private class TabCloseUI implements MouseListener, MouseMotionListener {
+    		private ClosableTabbedPane  tabbedPane;
+    		private int closeX = 0 ,closeY = 0, meX = 0, meY = 0;
+    		private int selectedTab;
+    		private final int  width = 8, height = 8;
+    		private Rectangle rectangle = new Rectangle(0,0,width, height);
+    		private TabCloseUI(){}
+    		public TabCloseUI(ClosableTabbedPane pane) {
+    			
+    			tabbedPane = pane;
+    			tabbedPane.addMouseMotionListener(this);
+    			tabbedPane.addMouseListener(this);
+    		}
+    		public void mouseEntered(MouseEvent me) {}
+    		public void mouseExited(MouseEvent me) {}
+    		public void mousePressed(MouseEvent me) {}
+    		public void mouseClicked(MouseEvent me) {}
+    		public void mouseDragged(MouseEvent me) {}
+    		
+    		
+
+    		public void mouseReleased(MouseEvent me) {
+    			if(closeUnderMouse(me.getX(), me.getY())){
+    				boolean isToCloseTab = tabAboutToClose(selectedTab);
+    				if (isToCloseTab && selectedTab > -1){			
+    					tabbedPane.removeTabAt(selectedTab);
+    				}
+    				selectedTab = tabbedPane.getSelectedIndex();
+    			}
+    		}
+
+    		public void mouseMoved(MouseEvent me) {	
+    			meX = me.getX();
+    			meY = me.getY();			
+    			if(mouseOverTab(meX, meY)){
+    				controlCursor();
+    				tabbedPane.repaint();
+    			}
+    		}
+
+    		private void controlCursor() {
+    			if(tabbedPane.getTabCount()>0)
+    				if(closeUnderMouse(meX, meY)){
+    					tabbedPane.setCursor(new Cursor(Cursor.HAND_CURSOR));	
+    					if(selectedTab > -1)
+    						tabbedPane.setToolTipTextAt(selectedTab, "Close " +tabbedPane.getTitleAt(selectedTab));
+    				}
+    				else{
+    					tabbedPane.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
+    					if(selectedTab > -1)
+    						tabbedPane.setToolTipTextAt(selectedTab,"");
+    				}	
+    		}
+
+    		private boolean closeUnderMouse(int x, int y) {		
+    			rectangle.x = closeX;
+    			rectangle.y = closeY;
+    			return rectangle.contains(x,y);
+    		}
+
+    		public void paint(Graphics g) {
+    			
+    			int tabCount = tabbedPane.getTabCount();
+    			for(int j = 0; j < tabCount; j++)
+    				if(tabbedPane.getComponent(j).isShowing()){			
+    					int x = tabbedPane.getBoundsAt(j).x + tabbedPane.getBoundsAt(j).width -width-5;
+    					int y = tabbedPane.getBoundsAt(j).y +5;	
+    					drawClose(g,x,y);
+    					break;
+    				}
+    			if(mouseOverTab(meX, meY)){
+    				drawClose(g,closeX,closeY);
+    			}
+    		}
+
+    		private void drawClose(Graphics g, int x, int y) {
+    			if(tabbedPane != null && tabbedPane.getTabCount() > 0){
+    				Graphics2D g2 = (Graphics2D)g;				
+    				drawColored(g2, isUnderMouse(x,y)? Color.RED : Color.WHITE, x, y);
+    			}
+    		}
+
+    		private void drawColored(Graphics2D g2, Color color, int x, int y) {
+    			g2.setStroke(new BasicStroke(5,BasicStroke.JOIN_ROUND,BasicStroke.CAP_ROUND));
+    			g2.setColor(Color.BLACK);
+    			g2.drawLine(x, y, x + width, y + height);
+    			g2.drawLine(x + width, y, x, y + height);
+    			g2.setColor(color);
+    			g2.setStroke(new BasicStroke(3, BasicStroke.JOIN_ROUND, BasicStroke.CAP_ROUND));
+    			g2.drawLine(x, y, x + width, y + height);
+    			g2.drawLine(x + width, y, x, y + height);
+
+    		}
+
+    		private boolean isUnderMouse(int x, int y) {
+    			if(Math.abs(x-meX)<width && Math.abs(y-meY)<height )
+    				return  true;		
+    			return  false;
+    		}
+
+    		private boolean mouseOverTab(int x, int y) {
+    			int tabCount = tabbedPane.getTabCount();
+    			for(int j = 0; j < tabCount; j++)
+    				if(tabbedPane.getBoundsAt(j).contains(meX, meY)){
+    					selectedTab = j;
+    					closeX = tabbedPane.getBoundsAt(j).x + tabbedPane.getBoundsAt(j).width -width-5;
+    					closeY = tabbedPane.getBoundsAt(j).y +5;					
+    					return true;
+    				}
+    			return false;
+    		}
+
+    	}
+
+    	public boolean tabAboutToClose(int tabIndex) {
+    		return true;
+    	}
+
+    	
+    }
+
     
 }
