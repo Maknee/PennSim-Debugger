@@ -30,22 +30,17 @@ public class RegisterFile extends AbstractTableModel
     private boolean savedNZPRecentlyWritten;
 
     public void pushad() {
-    	try {
-			this.savedPC = PC.clone();
-	    	this.savedPSR = PSR.clone();
-	    	this.savedMCR = MCR.clone();
-	    	this.savedregArr = new Word[regArr.length];
-	    	for(int i = 0; i < regArr.length; i++) {
-	    		savedregArr[i] = regArr[i].clone();
-	    	}
-	    	this.savedrecentlyWrittenValue = recentlyWrittenValue;
-	    	this.savedrecentlyWrittenRegister = recentlyWrittenRegister;
-	    	this.savedNZPRecentlyWritten = NZPRecentlyWritten;
-	    	this.fireTableDataChanged();
-		} catch (CloneNotSupportedException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
+    	this.savedPC = PC.clone();
+		this.savedPSR = PSR.clone();
+		this.savedMCR = MCR.clone();
+		this.savedregArr = new Word[regArr.length];
+		for(int i = 0; i < regArr.length; i++) {
+			savedregArr[i] = regArr[i].clone();
 		}
+		this.savedrecentlyWrittenValue = recentlyWrittenValue;
+		this.savedrecentlyWrittenRegister = recentlyWrittenRegister;
+		this.savedNZPRecentlyWritten = NZPRecentlyWritten;
+		this.fireTableDataChanged();
     }
     
     public void popad() {
