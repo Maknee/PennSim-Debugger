@@ -38,6 +38,7 @@ import org.jgraph.JGraph;
 
 import com.mxgraph.layout.mxCompactTreeLayout;
 import com.mxgraph.layout.mxIGraphLayout;
+import com.mxgraph.layout.hierarchical.mxHierarchicalLayout;
 import com.mxgraph.model.mxICell;
 import com.mxgraph.model.mxGeometry;
 import com.mxgraph.model.mxGraphModel;
@@ -342,6 +343,7 @@ public class LC4Disassembler extends JFrame{
 			while(!queue.isEmpty())
 			{
 				QueueBlock queueBlock = queue.remove();
+				System.out.println("NEW QUEUE BLOCK " + Word.toHex(queueBlock.pc, true));
 				DecodeInstructionIterative(queueBlock.pc, queueBlock.prevBlock, queueBlock.memory, queueBlock.callStack);
 			}
 			
@@ -355,6 +357,16 @@ public class LC4Disassembler extends JFrame{
 				System.out.println(block);
 			}
 			*/
+		}
+		
+		boolean ShouldBranch(Word instruction, Word PSR)
+		{
+			//Check branch instruction's bits and current nzp bits and see if they match
+			if((instruction.getZext(11, 9) & PSR.getZext(2, 0)) != 0)
+			{
+				return true;
+			}
+			return false;
 		}
 		
 		//Actual draw block call
@@ -1017,13 +1029,170 @@ public class LC4Disassembler extends JFrame{
 	            	}
 	            	else if(instructionDef.isBranch())
 	            	{
+	            		/**
+	            		 * Algo
+	            		 * 1) check if jump is necessary by checking if psr's nzp == branch instruction nzp
+	            		 * 	- if the block not jumping to exists
+	            		 * 		add to queue the not to jumping block
+	            		 * 	- if the block jumping to exists,
+	            		 * 		break
+	            		 * 	- if the block doesn't exist
+	            		 * 		add to queue and jump
+	            		 *	else if there is no jump
+	            		 *	- if the block jumping to exists,
+	            		 * 		don't add to queue
+	            		 * 	- if the block doesn't exist
+	            		 * 		add to queue and continue execution
+	            		 */
+	            		
+	            		/*
+	            		//add the instruction as vertex
+	            		lc4block.addInstructionBlock(pc, instruction);
+
+	            		if(ShouldBranch(instruction, memory.PSR))
+	            		{
+		            		//add to queue the non branched block
+		            		queue.add(new QueueBlock(pc + 1, lc4block, memory, callStack));
+	            			
+		            		System.out.println("BRANCHING " + Word.toHex(pc, true));
+		            		
+		            		//check if this block already exists
+		            		for(LC4Block block : blocks)
+		            		{
+		            			if(lc4block.equals(block))
+		            			{
+		            				nopFound = true;
+		            				endOfBlock = true;
+		    	            		System.out.println("FOUND ALREADY EXISTING BRANCH SYMBOL BLOCK " + Word.toHex(pc, true));
+		            				break;
+		            			}
+		            		}
+		            		
+		        			//check if the pc exists already. If so, link the prev block to this pc.
+		        			for(LC4Block block : blocks)
+		            		{
+		            			for(LC4InstructionBlock instructionBlock : block.instructionBlocks)
+		            			{
+		            				//link if the block contains the pc
+		            				if(pc + 1 + instructionDef.getPCOffset(instruction) == instructionBlock.pc)
+		            				{
+		            					lc4block.addRemainingBranches(lc4block.instructionBlocks.get(lc4block.instructionBlocks.size() - 1), instructionBlock);
+			            				nopFound = true;
+			            				endOfBlock = true;
+			    	            		System.out.println("FOUND ALREADY EXISTING BRANCH SYMBOL CELLS " + Word.toHex(pc, true));
+		            					break;
+		            				}
+		            			}
+		            		}
+		        			
+		        			//check if the branch is in the current block
+		        			for(LC4InstructionBlock instructionBlock : lc4block.instructionBlocks)
+	            			{
+	            				//link if the block contains the pc
+	            				if(pc + 1 + instructionDef.getPCOffset(instruction) == instructionBlock.pc)
+	            				{
+	            					System.out.println("LAST PC IN CURRENT BLOCK: " + Word.toHex(lc4block.instructionBlocks.get(lc4block.instructionBlocks.size() - 1).pc, true) + " CURRENT PC: " + Word.toHex(instructionBlock.pc, true));
+	            					lc4block.addRemainingBranches(lc4block.instructionBlocks.get(lc4block.instructionBlocks.size() - 1), instructionBlock);
+		            				nopFound = true;
+		            				endOfBlock = true;
+		    	            		System.out.println("FOUND ALREADY EXISTING BRANCH SYMBOL CELLS IN CURRENT BLOCK " + Word.toHex(pc, true));
+	            					break;
+	            				}
+	            			}
+		        			
+		        			if(endOfBlock)
+		        				break;
+		        			
+		        			blocks.add(lc4block);
+		            		
+		            		//if the block already exists, set it to be the existing block..
+		            		for(LC4Block block : blocks)
+		            		{
+		            			for(LC4InstructionBlock instructionBlock : block.instructionBlocks)
+		            			{
+		            				//link if the block contains the pc
+		            				if(lc4block.checkRange(instructionBlock.pc))
+		            				{
+		            					lc4block = block;
+
+		            					break;
+		            				}
+		            			}
+		            		}
+		            		
+		        			//set the new pc
+		        			pc = pc + 1 + instructionDef.getPCOffset(instruction);
+		        			
+		            		//Create new a block
+		            		LC4Block newLc4Block = new LC4Block();
+		            		
+		        			//try to add this block to the prev block (the block that called this block)
+		        			lc4block.addNextBlock(newLc4Block);
+		            		
+		        			//set this to be the next block
+		        			lc4block = newLc4Block;
+		        			
+		            		endOfBlock = true;	
+	            		}
+	            		else
+	            		{
+	            			
+	            			boolean jumpBlockAlreadyEncountered = false;
+	            			//check if this block already exists
+		            		for(LC4Block block : blocks)
+		            		{
+		            			if(lc4block.equals(block))
+		            			{
+		            				jumpBlockAlreadyEncountered = true;
+		            				break;
+		            			}
+		            		}
+		            		
+		        			//check if the pc exists already. If so, link the prev block to this pc.
+		        			for(LC4Block block : blocks)
+		            		{
+		            			for(LC4InstructionBlock instructionBlock : block.instructionBlocks)
+		            			{
+		            				//link if the block contains the pc
+		            				if(pc + 1 + instructionDef.getPCOffset(instruction) == instructionBlock.pc)
+		            				{
+			            				jumpBlockAlreadyEncountered = true;
+		            					break;
+		            				}
+		            			}
+		            		}
+		        			
+		        			//check if the branch is in the current block
+		        			for(LC4InstructionBlock instructionBlock : lc4block.instructionBlocks)
+	            			{
+	            				//link if the block contains the pc
+	            				if(pc + 1 + instructionDef.getPCOffset(instruction) == instructionBlock.pc)
+	            				{
+		            				jumpBlockAlreadyEncountered = true;
+	            					break;
+	            				}
+	            			}
+		        			
+		        			
+		            		//add to queue the non branched block
+		        			if(!jumpBlockAlreadyEncountered)
+		        			{
+		        				System.out.println("NOT ENCOUNTERED JUMP BLOCK " + Word.toHex(pc + 1 + instructionDef.getPCOffset(instruction), true));
+		        				queue.add(new QueueBlock(pc + 1 + instructionDef.getPCOffset(instruction), lc4block, memory, callStack));
+		        			}
+		        			
+    	            		System.out.println("NON BRANCH " + Word.toHex(pc, true) + " ADDED JUMP BLOCK " + jumpBlockAlreadyEncountered);
+    	            		pc++;
+	            		}
+	            		*/
+	            		
 	            		//add this last instruction (branch) to the block
 	            		lc4block.addInstructionBlock(pc, instruction);
 	            		
 	            		//add to queue the first if statement
 	            		queue.add(new QueueBlock(pc + 1, lc4block, memory, callStack));
 	            		
-	            		System.out.println("BRANCHING" + Word.toHex(pc, true));
+	            		System.out.println("BRANCHING " + Word.toHex(pc, true));
 	            		
 	            		//check if this block already exists
 	            		for(LC4Block block : blocks)
@@ -1032,6 +1201,7 @@ public class LC4Disassembler extends JFrame{
 	            			{
 	            				nopFound = true;
 	            				endOfBlock = true;
+	    	            		System.out.println("FOUND ALREADY EXISTING BRANCH SYMBOL BLOCK " + Word.toHex(pc, true));
 	            				break;
 	            			}
 	            		}
@@ -1050,6 +1220,7 @@ public class LC4Disassembler extends JFrame{
 	            					lc4block.addRemainingBranches(lc4block.instructionBlocks.get(lc4block.instructionBlocks.size() - 1), instructionBlock);
 		            				nopFound = true;
 		            				endOfBlock = true;
+		    	            		System.out.println("FOUND ALREADY EXISTING BRANCH SYMBOL CELLS " + Word.toHex(pc, true));
 	            					break;
 	            				}
 	            			}
@@ -1064,12 +1235,14 @@ public class LC4Disassembler extends JFrame{
             				//link if the block contains the pc
             				if(pc + 1 + instructionDef.getPCOffset(instruction) == instructionBlock.pc)
             				{
+            					System.out.println("LAST PC: " + Word.toHex(lc4block.instructionBlocks.get(lc4block.instructionBlocks.size() - 1).pc, true) + " CURRENT PC: " + Word.toHex(instructionBlock.pc, true));
             					lc4block.addRemainingBranches(lc4block.instructionBlocks.get(lc4block.instructionBlocks.size() - 1), instructionBlock);
 	            				nopFound = true;
 	            				endOfBlock = true;
+	    	            		System.out.println("FOUND ALREADY EXISTING BRANCH SYMBOL CELLS IN CURRENT BLOCK " + Word.toHex(pc, true));
             					break;
             				}
-            			}	      
+            			}
 	        			
 	        			if(endOfBlock)
 	        				break;
@@ -1104,6 +1277,7 @@ public class LC4Disassembler extends JFrame{
 	        			lc4block = newLc4Block;
 	        			
 	            		endOfBlock = true;
+	            		
 	            	}
 	            	else if(instructionDef.isTRAP())
 	            	{
@@ -1466,32 +1640,34 @@ public class LC4Disassembler extends JFrame{
 		this.graphParent = this.graph.getDefaultParent();
 		graph.getModel().beginUpdate();
 		
-    	//Start with the first instruction to analyze based on the PC and continue from there...		
-		LC4Analyzer analyzer = new LC4Analyzer(this.mac.getRegisterFile().getPC());
-		
-		applyStyleToGraph();
 		try
 		{
+	    	//Start with the first instruction to analyze based on the PC and continue from there...		
+			LC4Analyzer analyzer = new LC4Analyzer(this.mac.getRegisterFile().getPC());
 			
-//			Object v1 = graph.insertVertex(graphParent, null, "Hello", 20, 20, 80,
-//					30);
-//			Object v2 = graph.insertVertex(graphParent, null, "World!", 240, 150,
-//					80, 30);
-//			Object v3 = graph.insertVertex(graphParent, null, "World!", 240, 150,
-//					80, 30);
-//			Object v4 = graph.insertVertex(graphParent, null, "World!", 240, 150,
-//					80, 30);
-//			Object v5 = graph.insertVertex(graphParent, null, "World!", 240, 150,
-//					80, 30);
-//			Object v6 = graph.insertVertex(graphParent, null, "World!", 240, 150,
-//					80, 30);
-//			graph.insertEdge(graphParent, null, "Edge", v1, v2);
-//			graph.insertEdge(graphParent, null, "Edge", v1, v3);
-//			graph.insertEdge(graphParent, null, "Edge", v1, v4);
-//			graph.insertEdge(graphParent, null, "Edge", v1, v5);
-//			graph.insertEdge(graphParent, null, "Edge", v5, v6);
-//			graph.insertEdge(graphParent, null, "Edge", v6, v5);
-
+			applyStyleToGraph();
+			/*
+			Object v1 = graph.insertVertex(graphParent, null, "Hello", 20, 20, 80,
+					30);
+			Object v2 = graph.insertVertex(graphParent, null, "World!", 240, 150,
+					80, 30);
+			Object v3 = graph.insertVertex(graphParent, null, "World!", 240, 150,
+					80, 30);
+			Object v4 = graph.insertVertex(graphParent, null, "World!", 240, 150,
+					80, 30);
+			Object v5 = graph.insertVertex(graphParent, null, "World!", 240, 150,
+					80, 30);
+			Object v6 = graph.insertVertex(graphParent, null, "World!", 240, 150,
+					80, 30);
+			graph.insertEdge(graphParent, null, "Edge", v1, v2);
+			graph.insertEdge(graphParent, null, "Edge", v1, v3);
+			graph.insertEdge(graphParent, null, "Edge", v1, v4);
+			graph.insertEdge(graphParent, null, "Edge", v1, v5);
+			graph.insertEdge(graphParent, null, "Edge", v5, v6);
+			graph.insertEdge(graphParent, null, "Edge", v6, v1);
+			*/
+			
+			//mxIGraphLayout layout = new mxHierarchicalLayout(graph);
 			mxIGraphLayout layout = new ExtendedCompactTreeLayout(graph);
 
 			layout.execute(this.graphParent);
@@ -1500,6 +1676,10 @@ public class LC4Disassembler extends JFrame{
 		{
 			graph.getModel().endUpdate();
 		}
+		
+		/**
+		 * Main split panels
+		 */
 		
 		//Set properties of this JFrame
 		this.setMinimumSize(new Dimension(800, 600));
@@ -1513,6 +1693,24 @@ public class LC4Disassembler extends JFrame{
 		//Have the right panel hold the graph component and tabbing panel
 		this.mainRightPanel = new JPanel(new BorderLayout());
 		this.mainRightPanel.setVisible(true);
+		
+        /**
+         * Disassembly panel
+         */
+		
+		//Disassembly panel that contains graphs, etc
+		this.disassemblyPanel = new JPanel(new BorderLayout());
+		this.disassemblyPanel.setVisible(true);
+        
+		//Graph Component (Similar to JPanel (which is also a component))
+		mxGraphComponent graphComponent = new mxGraphComponent(graph);
+
+		//add the graph to disassembly panel
+		this.disassemblyPanel.add(graphComponent, BorderLayout.CENTER);
+		
+		/**
+		 * Tab panel
+		 */
 		
 		//Tabbing window that keeps track of subroutines clicked
 		this.tabPanel = new JPanel(new BorderLayout());
@@ -1532,24 +1730,17 @@ public class LC4Disassembler extends JFrame{
                 // closing will be canceled
             }
         };
-        this.subroutinePane.add("HI", new JPanel());
+
+        /** ---------------------------
+         * Add tabbed panes here
+         *  --------------------------- */
+        this.subroutinePane.add("Main disassembly", disassemblyPanel);
 		
         //add the pane to the panel
         this.tabPanel.add(subroutinePane, BorderLayout.CENTER);
         
-        //Disassembly panel that contains graphs, etc
-		this.disassemblyPanel = new JPanel(new BorderLayout());
-		this.disassemblyPanel.setVisible(true);
-        
-		//Graph Component (Similar to JPanel (which is also a component))
-		mxGraphComponent graphComponent = new mxGraphComponent(graph);
-
-		//add the graph to disassembly panel
-		this.disassemblyPanel.add(graphComponent, BorderLayout.CENTER);
-		
 		//Attach to right panel
-		this.mainRightPanel.add(tabPanel, BorderLayout.NORTH);
-		this.mainRightPanel.add(disassemblyPanel, BorderLayout.CENTER);
+		this.mainRightPanel.add(tabPanel, BorderLayout.CENTER);
 		
 		//Create main split panel that contains left/right windows
 		this.mainSplitPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mainLeftPanel, mainRightPanel);
@@ -1558,7 +1749,7 @@ public class LC4Disassembler extends JFrame{
 		this.mainSplitPanel.setOneTouchExpandable(true);
 		this.mainSplitPanel.setDividerLocation(150);
 		
-		this.add(mainSplitPanel, "Center");
+		this.add(mainSplitPanel, BorderLayout.CENTER);
 	}
 	
 	//http://stackoverflow.com/questions/42487675/formatting-jgraphx-edges
@@ -1772,145 +1963,5 @@ public class LC4Disassembler extends JFrame{
         }
 
     };
-    
-    //https://www.codeproject.com/Articles/18496/JTabbedPane-with-Closing-Tabs
-    public class ClosableTabbedPane extends JTabbedPane{
-    	private TabCloseUI closeUI = new TabCloseUI(this);
-    	
-    	public void paint(Graphics g){
-    		super.paint(g);
-    		closeUI.paint(g);
-    	}
-    	
-    	public void addTab(String title, Component component) {
-    		super.addTab(title+"  ", component);
-    	}
-    	
-    	
-    	public String getTabTitleAt(int index) {
-    		return super.getTitleAt(index).trim();
-    	}
-    	
-    	private class TabCloseUI implements MouseListener, MouseMotionListener {
-    		private ClosableTabbedPane  tabbedPane;
-    		private int closeX = 0 ,closeY = 0, meX = 0, meY = 0;
-    		private int selectedTab;
-    		private final int  width = 8, height = 8;
-    		private Rectangle rectangle = new Rectangle(0,0,width, height);
-    		private TabCloseUI(){}
-    		public TabCloseUI(ClosableTabbedPane pane) {
-    			
-    			tabbedPane = pane;
-    			tabbedPane.addMouseMotionListener(this);
-    			tabbedPane.addMouseListener(this);
-    		}
-    		public void mouseEntered(MouseEvent me) {}
-    		public void mouseExited(MouseEvent me) {}
-    		public void mousePressed(MouseEvent me) {}
-    		public void mouseClicked(MouseEvent me) {}
-    		public void mouseDragged(MouseEvent me) {}
-    		
-    		
-
-    		public void mouseReleased(MouseEvent me) {
-    			if(closeUnderMouse(me.getX(), me.getY())){
-    				boolean isToCloseTab = tabAboutToClose(selectedTab);
-    				if (isToCloseTab && selectedTab > -1){			
-    					tabbedPane.removeTabAt(selectedTab);
-    				}
-    				selectedTab = tabbedPane.getSelectedIndex();
-    			}
-    		}
-
-    		public void mouseMoved(MouseEvent me) {	
-    			meX = me.getX();
-    			meY = me.getY();			
-    			if(mouseOverTab(meX, meY)){
-    				controlCursor();
-    				tabbedPane.repaint();
-    			}
-    		}
-
-    		private void controlCursor() {
-    			if(tabbedPane.getTabCount()>0)
-    				if(closeUnderMouse(meX, meY)){
-    					tabbedPane.setCursor(new Cursor(Cursor.HAND_CURSOR));	
-    					if(selectedTab > -1)
-    						tabbedPane.setToolTipTextAt(selectedTab, "Close " +tabbedPane.getTitleAt(selectedTab));
-    				}
-    				else{
-    					tabbedPane.setCursor(new Cursor(Cursor.DEFAULT_CURSOR));
-    					if(selectedTab > -1)
-    						tabbedPane.setToolTipTextAt(selectedTab,"");
-    				}	
-    		}
-
-    		private boolean closeUnderMouse(int x, int y) {		
-    			rectangle.x = closeX;
-    			rectangle.y = closeY;
-    			return rectangle.contains(x,y);
-    		}
-
-    		public void paint(Graphics g) {
-    			
-    			int tabCount = tabbedPane.getTabCount();
-    			for(int j = 0; j < tabCount; j++)
-    				if(tabbedPane.getComponent(j).isShowing()){			
-    					int x = tabbedPane.getBoundsAt(j).x + tabbedPane.getBoundsAt(j).width -width-5;
-    					int y = tabbedPane.getBoundsAt(j).y +5;	
-    					drawClose(g,x,y);
-    					break;
-    				}
-    			if(mouseOverTab(meX, meY)){
-    				drawClose(g,closeX,closeY);
-    			}
-    		}
-
-    		private void drawClose(Graphics g, int x, int y) {
-    			if(tabbedPane != null && tabbedPane.getTabCount() > 0){
-    				Graphics2D g2 = (Graphics2D)g;				
-    				drawColored(g2, isUnderMouse(x,y)? Color.RED : Color.WHITE, x, y);
-    			}
-    		}
-
-    		private void drawColored(Graphics2D g2, Color color, int x, int y) {
-    			g2.setStroke(new BasicStroke(5,BasicStroke.JOIN_ROUND,BasicStroke.CAP_ROUND));
-    			g2.setColor(Color.BLACK);
-    			g2.drawLine(x, y, x + width, y + height);
-    			g2.drawLine(x + width, y, x, y + height);
-    			g2.setColor(color);
-    			g2.setStroke(new BasicStroke(3, BasicStroke.JOIN_ROUND, BasicStroke.CAP_ROUND));
-    			g2.drawLine(x, y, x + width, y + height);
-    			g2.drawLine(x + width, y, x, y + height);
-
-    		}
-
-    		private boolean isUnderMouse(int x, int y) {
-    			if(Math.abs(x-meX)<width && Math.abs(y-meY)<height )
-    				return  true;		
-    			return  false;
-    		}
-
-    		private boolean mouseOverTab(int x, int y) {
-    			int tabCount = tabbedPane.getTabCount();
-    			for(int j = 0; j < tabCount; j++)
-    				if(tabbedPane.getBoundsAt(j).contains(meX, meY)){
-    					selectedTab = j;
-    					closeX = tabbedPane.getBoundsAt(j).x + tabbedPane.getBoundsAt(j).width -width-5;
-    					closeY = tabbedPane.getBoundsAt(j).y +5;					
-    					return true;
-    				}
-    			return false;
-    		}
-
-    	}
-
-    	public boolean tabAboutToClose(int tabIndex) {
-    		return true;
-    	}
-
-    	
-    }
-
     
 }

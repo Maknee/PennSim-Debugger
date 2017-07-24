@@ -3,24 +3,31 @@ import java.awt.Color;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridLayout;
+import java.awt.Image;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
+import java.awt.image.BufferedImage;
 import java.io.BufferedInputStream;
 import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
+import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.Stack;
 
+import javax.imageio.ImageIO;
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.DefaultCellEditor;
+import javax.swing.ImageIcon;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
+import javax.swing.JDialog;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -32,15 +39,19 @@ import javax.swing.JPanel;
 import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.JToggleButton;
 import javax.swing.UIManager;
 import javax.swing.UnsupportedLookAndFeelException;
+import javax.swing.border.Border;
 import javax.swing.event.TableModelEvent;
 import javax.swing.event.TableModelListener;
 import javax.swing.filechooser.FileFilter;
+import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.text.DefaultHighlighter;
@@ -51,167 +62,109 @@ import javax.swing.text.DefaultHighlighter;
 
 public class GUI implements ActionListener, TableModelListener {
 	
-	private final Machine mac;
+	/**
+	 * Pointers to essential systems
+	 */
+	
+	private Machine mac;
+	private CommandLine commandLine;
 	public static String LOOKANDFEEL;
+	
+	
+	/**
+	 * STUFF I NEED TO CHANGE
+	 */
+	
 	
 	/**
 	 * Handles to menu options
 	 */
 	
-	private final JFrame frame;
-	private final JFileChooser fileChooser;
-	private final JMenuBar menuBar;
-	private final JMenu fileMenu;
-	private final JMenu aboutMenu;
-	private final JMenuItem openItem;
-	private final JMenuItem quitItem;
-	private final JMenuItem commandItem;
-	private final JMenuItem versionItem;
+	private JFrame frame;
+	private JFileChooser fileChooser;
+	private JMenuBar menuBar;
+	private JMenu fileMenu;
+	private JMenu aboutMenu;
+	private JMenuItem openItem;
+	private JMenuItem quitItem;
+	private JMenuItem commandItem;
+	private JMenuItem versionItem;
 	
 	/**
 	 * Handles to panels of the main menu
 	 */
 	
-	private final JPanel controlPanel;
-	
-	/**
-	 * Command line
-	 */
-	
-	private final JLabel statusLabel;
-	private final Color runningColor;
-	private final Color suspendedColor;
-	private final Color haltedColor;
-	private final JTable regTable;
-	private final CommandLinePanel commandPanel;
-	private final CommandOutputWindow commandOutputWindow;
-	
-	/**
-	 * Breakpoints panel
-	 */
-	
-	private final JPanel dumpAndBreakpointsPanel;
-	private final JPanel breakpointsPanel;
-	private final JPanel breakpointsAndStackPanel;
+	private ControlPanel controlPanel;
+	private InfoPanel infoPanel;
 	
 	/**
 	 * Memory dump
 	 */
-	
-	private final JPanel memoryDumpPanel;
-	private final JPanel memoryDumpAndGoToPanel;
-	private JTextField gotoDumpText;
-	private final JButton gotoDumpButton;
-	
-	private final JPanel memoryAndGoToPanel;
-	private JTextField gotoText;
-	private final JButton gotoButton;
-	
+
+	private JTextField gotoDumpTexts;
+	private int numDumps = 4;
+		
 	/**
 	 * Memory Panel
 	 */
 	
-	private final JPanel memoryPanel;
-	private final JTable memTable;
-	private final JScrollPane memScrollPane;
+	public final MemoryPanel memoryPanel;
 	public static final Color BreakPointColor;
 	public static final Color PCColor;
-	
-	/**
-	 * Stack
-	 */
-	
-	private final JPanel stackPanel;
-	private JTextArea stackText;
 	
 	/**
 	 * Registers
 	 */
 	
-	private final JPanel registerPanel;
+	private JPanel registerPanel;
 	
 	/**
 	 * Devices
 	 */
 	
-	private final JPanel devicePanel;
-	private final TextConsolePanel ioPanel;
-	private final VideoConsole video;
-	private final JPanel srcPanel;
-	private final JTextArea srcText;
-	private final JScrollPane srcScrollPane;
+	private DevicePanel devicePanel;
+	private JPanel srcPanel;
+	private JTextArea srcText;
+	private JScrollPane srcScrollPane;
 	
 	/**
 	 * Datapath button
 	 */
 	
-	private final DataPath dataPath;
-	private final JPanel dataPathPanel;
-	private final JFrame dataPathFrame;
-	private final JButton dataPathButton;
+	private DataPath dataPath;
+	private JPanel dataPathPanel;
+	private JFrame dataPathFrame;
+	private JButton dataPathButton;
 	public ControlSignals signals;
 	
-	/**
-	 * Handles to menu buttons
-	 */
+	private final JMenu resourceMenu;
+	private final JMenuItem datapathItem;
+	private final JMenuItem instructionsItem;
+	private final JMenuItem controlSignals1Item;
+	private final JMenuItem controlSignals2Item;
 	
-	private final JButton nextButton;
-	private final JButton stepButton;
-	private final JButton continueButton;
-	private final JButton finishButton;
-	private final JButton stopButton;
-	
-	/**
-	 * Const strings (mostly for callback commands)
-	 */
-	private final String openActionCommand = "Open";
-	private final String quitActionCommand = "Quit";
-	private final String outputWindowActionCommand = "OutputWindow";
-	private final String versionActionCommand = "Version";
-	private final String nextButtonCommand = "Next";
-	private final String stepButtonCommand = "Step";
-	private final String continueButtonCommand = "Continue";
-	private final String finishButtonCommand = "Finish";
-	private final String stopButtonCommand = "Stop";
-	private final String statusLabelRunning = "    Running ";
-	private final String statusLabelSuspended = "Suspended ";
-	private final String statusLabelHalted = "       Halted ";
-
-	private JTextArea breakpointsText;
-	private JTable memoryDumpTable;
-	private JScrollPane memoryDumpScrollPane;
-
-	private final JToggleButton toggleUpdateButton;
-	private final JToggleButton toggleColorButton;
 
 	/**
 	 * Pop up frame that displays the opcodes for instructions
 	 */
 	
-	private final JFrame opcodeFrame;
-	private final JPanel opcodePanel;
+	private JFrame opcodeFrame;
+	private JPanel opcodePanel;
 	private JTextField opcodeText;
 	private boolean addedOpcodeListener = false;
-	
-	/**
-	 * About button
-	 */
-
-	private JButton aboutButton;
 	
 	/**
 	 * Simple graph
 	 */
 	
 	private LC4Graph lc4Graph;
-	private final JButton lc4Button;
+	private JButton lc4Button;
 
 	/**
 	 * Disassembler/Grapher
 	 */
 	
 	private LC4Disassembler lc4Diassembler;
-	private final JButton lc4DisassemblerButton;
 	
 	private void setupDataPathPanel() {
 		this.dataPathPanel.setLayout(new BoxLayout(this.dataPathPanel, 2));
@@ -224,12 +177,6 @@ public class GUI implements ActionListener, TableModelListener {
 	private void generateLc4Graph() {
 		lc4Graph = new LC4Graph();
 		lc4Graph.init(this.mac);
-//        JFrame frame = new JFrame();
-//        frame.getContentPane().add(lc4Graph);
-//        frame.setTitle("JGraphT Adapter to JGraph Demo");
-//        frame.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-//        frame.pack();
-//        frame.setVisible(true);
 	}
 	
 	private void generateLC4Diassembly()
@@ -238,6 +185,10 @@ public class GUI implements ActionListener, TableModelListener {
 
 	}
 
+	/**
+	 * Loads obj file?
+	 * @param s
+	 */
 	public void loadSourceFile(final String s) {
 		this.srcText.setText(null);
 		try {
@@ -251,6 +202,11 @@ public class GUI implements ActionListener, TableModelListener {
 		}
 	}
 
+	/**
+	 * Goes to line num
+	 * @param n
+	 * @param n2
+	 */
 	public void gotoSourceLine(final int n, final int n2) {
 		final DefaultHighlighter highlighter = new DefaultHighlighter();
 		this.srcText.setHighlighter(highlighter);
@@ -274,6 +230,9 @@ public class GUI implements ActionListener, TableModelListener {
 		}
 	}
 
+	/**
+	 * ?
+	 */
 	private void setupSrcPanel() {
 		this.srcPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Source"),
 				BorderFactory.createEmptyBorder(5, 5, 5, 5)));
@@ -285,168 +244,1030 @@ public class GUI implements ActionListener, TableModelListener {
 		this.srcPanel.setVisible(true);
 	}
 
-	private void setupMemoryPanel() {
-		JLabel myLabel = new JLabel("Line Number:");
-
-		JPanel panel = new JPanel(new BorderLayout());
-		panel.add(myLabel, BorderLayout.WEST);
-		panel.add(gotoText, BorderLayout.CENTER);
-		panel.add(gotoButton, BorderLayout.EAST);
-		this.gotoButton.setActionCommand("goto");
-		this.gotoButton.addActionListener(this);
-		panel.setPreferredSize(new Dimension(220, 30));
-		this.memoryAndGoToPanel.add(panel, BorderLayout.NORTH);
-		this.memoryAndGoToPanel.add(memoryPanel, BorderLayout.CENTER);
-		this.memoryPanel.add(this.memScrollPane);
-		this.memoryPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Memory"),
-				BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-		this.memTable.getModel().addTableModelListener(this);
-		this.memTable.getModel().addTableModelListener((TableModelListener) this.memScrollPane.getVerticalScrollBar());
-		this.memTable.setPreferredScrollableViewportSize(new Dimension(220, 480));
-		if (!PennSim.isDoubleBufferedVideo()) {
-			this.memTable.getModel().addTableModelListener(this.video);
+	/*********************************************************************************************
+	 * MAIN MEMORY CENTER
+	 *********************************************************************************************/
+	
+	/**
+	 * Panel containing line panel and memory panel
+	 * Setups (MAIN CENTER) Memory panel (NOT A DUMP)	
+	 */
+	
+	/*
+	 * Components
+	 * memoryPanel
+	 * 	- lineGoToPanel (North)
+	 * 		- lineNumberLabel (West), gotoText (Center), gotoButton (East)
+	 * 	- memoryPanel (South)
+	 * 		- memTable (West), memScrollPane(East)
+	 */	
+	class MemoryPanel extends JPanel
+	{
+		public LineGoToPanel lineGoToPanel;
+		public MemoryTablePanel memoryTablePanel;
+		
+		MemoryPanel(GUI gui)
+		{
+			//Setup layout
+			this.setLayout(new BorderLayout());
+			
+			//Init panels
+			lineGoToPanel = new LineGoToPanel(gui, "Line Number:", "Go to line", "goto");
+			memoryTablePanel = new MemoryTablePanel(gui);
+			
+			//Add the two panels
+			this.add(lineGoToPanel, BorderLayout.NORTH);
+			this.add(memoryTablePanel, BorderLayout.CENTER);
 		}
 	}
+	
+	/**
+	 * Creates a Line GUI panel consisting of 
+	 * panel
+	 * 	- label text
+	 * 	- button text
+	 * 	- goto button
+	 * @param labelText 
+	 * label of the left side
+	 * @param buttonText 
+	 * text the button should hold
+	 * @param String buttonActionCommand
+	 * the command callback of the button
+	 */
+	class LineGoToPanel extends JPanel
+	{
+		private JLabel lineNumberLabel;
+		private JTextField gotoText;
+		private JButton gotoButton;
+		
+		LineGoToPanel(GUI gui, String labelText, String buttonText, String buttonActionCommand)
+		{	
+			//Setup layout
+			this.setLayout(new BorderLayout());
+			
+			//Init label, text and button
+			lineNumberLabel = new JLabel(labelText);
+			gotoText = new JTextField();
+			gotoButton = new JButton(buttonText);
+			
+			//Add actionListener to the gotoButton
+			gotoButton.setActionCommand(buttonActionCommand);
+			gotoButton.addActionListener(gui);
+			
+			//Add the components
+			this.add(lineNumberLabel, BorderLayout.WEST);
+			this.add(gotoText, BorderLayout.CENTER);
+			this.add(gotoButton, BorderLayout.EAST);
+	
+			//Format the panel
+			this.setPreferredSize(new Dimension(220, 30));
+		}
+		
+		public JTextField GetGoToText()
+		{
+			return this.gotoText;
+		}
+	}
+	
+	/**
+	 * Creates a memory panel consisting of 
+	 * panel
+	 * 	- memory table
+	 * 		- memory scroll pane
+	 */
+	
+	class MemoryTablePanel extends JPanel
+	{
+		JTable memTable;
+		JScrollPane memScrollPane;
+		MemoryTablePanel(GUI gui)
+		{
+			//Setup layout
+			this.setLayout(new BorderLayout());
+			
+			//Init memtable
+			memTable = new JTable(mac.getMemory()) {
+				@Override
+				public Component prepareRenderer(final TableCellRenderer tableCellRenderer, final int row, final int column) {
+					if (!addedOpcodeListener) {
+						this.addMouseListener(new MouseAdapter() {
+							public void mouseEntered(MouseEvent evt) {
+								if (!opcodeFrame.isVisible()) {
+									opcodeFrame.setVisible(true);
+									opcodeFrame.setLocation(evt.getLocationOnScreen());
+									opcodeFrame.toFront();
+									opcodeFrame.requestFocus();
+									opcodeFrame.repaint();
+									Word word = null;
+									if(memTable.rowAtPoint(evt.getPoint()) != -1)
+										if(GUI.this.mac.getMemory().getWord(memTable.rowAtPoint(evt.getPoint())) != null)
+											word = GUI.this.mac.getMemory().getWord(memTable.rowAtPoint(evt.getPoint()));
+									if (word != null)
+										if (ISA.getInstruction(word) != null)
+											opcodeText.setText("Instruction: " + ISA.disassemble(word, 0, mac)
+													+ " | Bits " + word.toBinary());
+								}
+							}
+	
+							public void mouseExited(MouseEvent evt) {
+								if (opcodeFrame.isVisible())
+									opcodeFrame.setVisible(false);
+							}
+	
+							public void mousePressed(MouseEvent evt) {
+								// System.out.println("PRESSED");
+							}
+	
+							public void mouseReleased(MouseEvent evt) {
+								// System.out.println("RELEASED");
+							}
+						});
+						addedOpcodeListener = true;
+					}
+					final Component prepareRenderer = super.prepareRenderer(tableCellRenderer, row, column);
+					if (column == 0) {
+						final JCheckBox checkBox = new JCheckBox();
+						if (row < 65024) {
+							if (GUI.this.mac.getMemory().isBreakPointSet(row)) {
+								checkBox.setSelected(true);
+								checkBox.setBackground(GUI.BreakPointColor);
+								checkBox.setForeground(GUI.BreakPointColor);
+							} else {
+								checkBox.setSelected(false);
+								checkBox.setBackground(this.getBackground());
+							}
+						} else {
+							checkBox.setEnabled(false);
+							checkBox.setBackground(Color.lightGray);
+						}
+						return checkBox;
+					}
+					if (row == GUI.this.mac.getRegisterFile().getPC()) {
+						prepareRenderer.setBackground(GUI.PCColor);
+					} else if (GUI.this.mac.getMemory().isBreakPointSet(row)) {
+						prepareRenderer.setBackground(GUI.BreakPointColor);
+					} else {
+						prepareRenderer.setBackground(this.getBackground());
+						Word word = GUI.this.mac.getMemory().getWord(row);
+						if (word != null && infoPanel.toggleColorButton.isSelected()) {
+							try {
+								if (ISA.getInstruction(word).isPseudo()) {
+									prepareRenderer.setBackground(Color.GRAY);
+								} else if (ISA.getInstruction(word).isData()) {
+									prepareRenderer.setBackground(Color.GREEN);
+								} else if (ISA.getInstruction(word).isDirective()) {
+									prepareRenderer.setBackground(Color.CYAN);
+								} else if (ISA.getInstruction(word).isCall()) {
+									prepareRenderer.setBackground(Color.CYAN);
+								} else if (ISA.getInstruction(word).isBranch()) {
+									prepareRenderer.setBackground(new Color(255, 255, 140, 155));
+								} else if (ISA.getInstruction(word).isLoad()) {
+									prepareRenderer.setBackground(new Color(102, 255, 102, 155));
+								} else if (ISA.getInstruction(word).isStore()) {
+									prepareRenderer.setBackground(new Color(178, 141, 255, 255));
+								}
+							} catch (Exception ex) {
+								// nothing
+							}
+						}
+					}
+					return prepareRenderer;
+				}
+	
+				@Override
+				public void tableChanged(final TableModelEvent tableModelEvent) {
+					if (mac != null) {
+						super.tableChanged(tableModelEvent);
+					}
+				}
+			};
+			
+			//Init memScrollPane
+			this.memScrollPane = new JScrollPane(this.memTable) {
+				@Override
+				public JScrollBar createVerticalScrollBar() {
+					return new HighlightScrollBar(mac);
+				}
+			};
+			
+			memTable.getModel().addTableModelListener(gui);
+			memTable.getModel().addTableModelListener((TableModelListener) memScrollPane.getVerticalScrollBar());
+			memTable.setPreferredScrollableViewportSize(new Dimension(220, 480));
+			if (!PennSim.isDoubleBufferedVideo()) {
+				memTable.getModel().addTableModelListener(gui.devicePanel.GetVideo());
+			}
+			
+			//Edit columns of table
+			this.memScrollPane.getVerticalScrollBar().setBlockIncrement(this.memTable.getModel().getRowCount() / 512);
+			this.memScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+			final TableColumn column3 = this.memTable.getColumnModel().getColumn(0);
+			column3.setMaxWidth(20);
+			column3.setMinWidth(20);
+			column3.setCellEditor(new DefaultCellEditor(new JCheckBox()));
+			final TableColumn column4 = this.memTable.getColumnModel().getColumn(1);
+			column4.setMinWidth(100);
+			column4.setPreferredWidth(100);
+			column4.setMaxWidth(1000);
+			final TableColumn column5 = this.memTable.getColumnModel().getColumn(2);
+			column5.setMinWidth(100);
+			column5.setPreferredWidth(100);
+			column5.setMaxWidth(1000);
+			
+			//add the pane to panel
+			this.add(memScrollPane);
+			this.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Memory"),
+					BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+			
+		}
+		
+		public JTable GetMemTable()
+		{
+			return memTable;
+		}
+	}
+	
+	//==========================================================================================
 
+	/**
+	 * 
+	 * Control Panel consisting of the command line
+	 *
+	 */
+	
+	class ControlPanel extends JPanel
+	{
+		/**
+		 * Buttons
+		 */
+		private JButton nextButton;
+		private JButton stepButton;
+		private JButton continueButton;
+		private JButton finishButton;
+		private JButton stopButton;
+		private JButton aboutButton;
+		private JButton dataPathButton;
+
+		/**
+		 * Command line
+		 */
+		
+		private JLabel statusLabel;
+		private Color runningColor;
+		private Color suspendedColor;
+		private Color haltedColor;
+		private CommandLinePanel commandPanel;
+		private CommandOutputWindow commandOutputWindow;
+		
+		/**
+		 * Const strings (mostly for callback commands)
+		 */
+		public String openActionCommand = "Open";
+		public String quitActionCommand = "Quit";
+		public String outputWindowActionCommand = "OutputWindow";
+		public String versionActionCommand = "Version";
+		public String nextButtonCommand = "Next";
+		public String stepButtonCommand = "Step";
+		public String continueButtonCommand = "Continue";
+		public String finishButtonCommand = "Finish";
+		public String stopButtonCommand = "Stop";
+		public String statusLabelRunning = "    Running ";
+		public String statusLabelSuspended = "Suspended ";
+		public String statusLabelHalted = "       Halted ";
+		
+		
+		ControlPanel(GUI gui)
+		{
+			//Setup layout
+			this.setLayout(new BoxLayout(this, 1));
+			
+			//Init buttons
+			final JPanel buttonPanel = new JPanel();
+			buttonPanel.setLayout(new GridLayout(1, 7));
+			
+			//next
+			this.nextButton = new JButton(nextButtonCommand);
+			this.nextButton.setActionCommand(nextButtonCommand);
+			this.nextButton.addActionListener(gui);
+			buttonPanel.add(this.nextButton);
+			
+			//step
+			this.stepButton = new JButton(stepButtonCommand);
+			this.stepButton.setActionCommand(stepButtonCommand);
+			this.stepButton.addActionListener(gui);
+			buttonPanel.add(this.stepButton);
+			
+			//continue
+			this.continueButton = new JButton(continueButtonCommand);
+			this.continueButton.setActionCommand(continueButtonCommand);
+			this.continueButton.addActionListener(gui);
+			buttonPanel.add(this.continueButton);
+			
+			//finish
+			this.finishButton = new JButton(finishButtonCommand);
+			this.finishButton.setActionCommand(finishButtonCommand);
+			this.finishButton.addActionListener(gui);
+			buttonPanel.add(this.finishButton);
+			
+			//stop
+			this.stopButton = new JButton(stopButtonCommand);
+			this.stopButton.setActionCommand(stopButtonCommand);
+			this.stopButton.addActionListener(gui);
+			buttonPanel.add(this.stopButton);
+			
+			//about
+			this.aboutButton = new JButton("About/Report Issue");
+			this.aboutButton.addActionListener(new java.awt.event.ActionListener() {
+				@Override
+				public void actionPerformed(java.awt.event.ActionEvent evt) {
+					JOptionPane.showMessageDialog(frame,
+							"PennSim edited by Henry Zhu and Xuerui Fa. \nIf any issues come up, please reach out to the TAs on Piazza",
+							"About | Report", JOptionPane.INFORMATION_MESSAGE, null);
+					;
+				}
+			});
+			
+			//datapath
+			this.dataPathButton = new JButton("Open DataPath Chart");
+			this.dataPathButton.setActionCommand("DataPath");
+			this.dataPathButton.addActionListener(gui);
+			buttonPanel.add(this.dataPathButton);
+
+
+			buttonPanel.add(this.aboutButton);
+
+			//Init status label
+			this.statusLabel = new JLabel("");
+			this.runningColor = new Color(43, 129, 51);
+			this.suspendedColor = new Color(209, 205, 93);
+			this.haltedColor = new Color(161, 37, 40);
+			this.SetStatusLabelSuspended();	
+			buttonPanel.add(this.statusLabel);
+			
+			//Init command panel and output window
+			this.commandPanel = new CommandLinePanel(mac, commandLine);
+			(this.commandOutputWindow = new CommandOutputWindow("Command Output")).addWindowListener(new WindowListener() {
+				@Override
+				public void windowActivated(final WindowEvent windowEvent) {
+				}
+
+				@Override
+				public void windowClosed(final WindowEvent windowEvent) {
+				}
+
+				@Override
+				public void windowClosing(final WindowEvent windowEvent) {
+					commandOutputWindow.setVisible(false);
+				}
+
+				@Override
+				public void windowDeactivated(final WindowEvent windowEvent) {
+				}
+
+				@Override
+				public void windowDeiconified(final WindowEvent windowEvent) {
+				}
+
+				@Override
+				public void windowIconified(final WindowEvent windowEvent) {
+				}
+
+				@Override
+				public void windowOpened(final WindowEvent windowEvent) {
+				}
+			});
+			this.commandOutputWindow.setSize(700, 600);
+			Console.registerConsole(this.commandPanel);
+			Console.registerConsole(this.commandOutputWindow);
+			this.commandPanel.setGUI(gui);
+			
+			this.add(buttonPanel);
+			this.add(this.commandPanel);
+			this.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Controls"),
+					BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+			this.setVisible(true);
+		}
+		
+		public void SetStatusLabelRunning() {
+			this.statusLabel.setText(statusLabelRunning);
+			this.statusLabel.setForeground(this.runningColor);
+		}
+
+		public void SetStatusLabelSuspended() {
+			this.statusLabel.setText(statusLabelSuspended);
+			this.statusLabel.setForeground(this.suspendedColor);
+		}
+
+		public void SetStatusLabelHalted() {
+			this.statusLabel.setText(statusLabelHalted);
+			this.statusLabel.setForeground(this.haltedColor);
+		}
+		
+		public CommandLinePanel GetCommandPanel()
+		{
+			return commandPanel;
+		}
+	}
+	
 	public JPanel getControlPanel() {
 		return this.controlPanel;
 	}
 
-	private void setupControlPanel() {
-		this.controlPanel.setLayout(new BoxLayout(this.controlPanel, 1));
-		final JPanel panel = new JPanel();
-		panel.setLayout(new GridLayout(1, 7));
-		this.nextButton.setActionCommand(nextButtonCommand);
-		this.nextButton.addActionListener(this);
-		panel.add(this.nextButton);
-		this.stepButton.setActionCommand(stepButtonCommand);
-		this.stepButton.addActionListener(this);
-		panel.add(this.stepButton);
-		this.continueButton.setActionCommand(continueButtonCommand);
-		this.continueButton.addActionListener(this);
-		panel.add(this.continueButton);
-		this.finishButton.setActionCommand(finishButtonCommand);
-		this.finishButton.addActionListener(this);
-		panel.add(this.finishButton);
-		this.stopButton.setActionCommand(stopButtonCommand);
-		this.stopButton.addActionListener(this);
-		panel.add(this.stopButton);
-		this.setStatusLabelSuspended();
+	//==========================================================================================
+	
+	/**
+	 * 
+	 * Register panel consisting of all the important registers R0, R1, ...
+	 *
+	 */
+	
+	class RegisterPanel extends JPanel
+	{
+		private JTable regTable;
+		
+		RegisterPanel(GUI gui)
+		{
+			this.regTable = new JTable(gui.mac.getRegisterFile());
+			final TableColumn column = this.regTable.getColumnModel().getColumn(0);
+			column.setMaxWidth(30);
+			column.setMinWidth(30);
+			final TableColumn column2 = this.regTable.getColumnModel().getColumn(2);
+			column2.setMaxWidth(30);
+			column2.setMinWidth(30);
+			
+			this.regTable.getModel().addTableModelListener(gui);
 
-		this.dataPathButton.setActionCommand("DataPath");
-		this.dataPathButton.addActionListener(this);
-		panel.add(this.dataPathButton);
+			this.add(this.regTable);
+			this.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Registers"),
+					BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+			this.setVisible(true);
+		}
+	}
+	
+	//==========================================================================================
 
-		aboutButton.addActionListener(new java.awt.event.ActionListener() {
-			@Override
-			public void actionPerformed(java.awt.event.ActionEvent evt) {
-				JOptionPane.showMessageDialog(frame,
-						"PennSim edited by Henry Zhu ~ 10/31/16. \nIf any issues come up, feel free to post on piazza or email henryzhu@seas.upenn.edu :)",
-						"About | Report", JOptionPane.INFORMATION_MESSAGE, null);
-				;
+	/**
+	 * 
+	 * Device panel consisting of video console and io text panel
+	 *
+	 */
+	
+	class DevicePanel extends JPanel
+	{
+		private TextConsolePanel ioPanel;
+		private VideoConsole video;
+		
+		DevicePanel(GUI gui)
+		{
+			//Init video
+			this.video = new VideoConsole(gui.mac);
+			
+			//Init IoPanel
+			(this.ioPanel = new TextConsolePanel(gui.mac.getMemory().getKeyBoardDevice(), gui.mac.getMemory().getMonitorDevice()))
+			.setMinimumSize(new Dimension(256, 85));
+			
+			//Format and add video/io panel
+			this.setLayout(new BoxLayout(this, 1));
+			this.add(this.video);
+			this.add(this.ioPanel);
+			this.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Devices"),
+					BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+			this.setVisible(true);
+		}
+		
+		public VideoConsole GetVideo()
+		{
+			return this.video;
+		}
+		
+		public TextConsolePanel GetIoPanel()
+		{
+			return this.ioPanel;
+		}
+	}
+	
+	public void setTextConsoleEnabled(final boolean enabled) {
+		this.devicePanel.GetIoPanel().setEnabled(enabled);
+	}
+
+	public VideoConsole getVideoConsole() {
+		return this.devicePanel.GetVideo();
+	}
+	
+	//==========================================================================================
+	
+	/**
+	 * 
+	 * Info Panel layout
+	 * InfoPanel
+	 * 	- dumpAndBreakpoints
+	 * 	- togglePanel (South) | toggle buttons
+	 *	- 
+	 */
+	
+	class InfoPanel extends JPanel
+	{
+		//Toggles
+		private JToggleButton toggleUpdateButton;
+		private JToggleButton toggleColorButton;
+		
+		public String toggleUpdateString = "toggle update";
+		public String toggleColorString = "toggle color";
+		
+		//Dump panels
+		public ArrayList<DumpPanel> dumpPanels;
+		public JTabbedPane dumpTabbedPanel;
+
+		//Breakpoint panel
+		public JPanel breakpointsPanel;
+		public JTextArea breakpointsText;
+		
+		//Dump and Breakpoints panel
+		public JPanel dumpAndBreakpointsPanel;
+		
+		//Stack panel
+		public JPanel stackPanel;
+		public JTextArea stackText;
+		
+		//Buttons
+		public JButton lc4Button;
+		public JButton lc4DisassemblerButton;		
+		
+		public String lc4ButtonCommand = "generate graph";
+		public String lc4DisassemblerButtonCommand = "disassemble lc4";
+		InfoPanel(GUI gui)
+		{
+			//Setup layout
+			this.setLayout(new BorderLayout());
+			
+			//Init toggle buttons
+			this.toggleUpdateButton = new JToggleButton("Additional Information Output Disabled");
+			this.toggleColorButton = new JToggleButton("Christmas Syntax Highlighting Disabled");
+			
+			//Format toggle buttons
+			this.toggleUpdateButton.setActionCommand(toggleUpdateString);
+			this.toggleUpdateButton.addActionListener(gui);
+			this.toggleUpdateButton.setSelected(false);
+
+			this.toggleColorButton.setActionCommand(toggleColorString);
+			this.toggleColorButton.addActionListener(gui);
+			this.toggleColorButton.setSelected(false);
+			
+			//Add the buttons to a panel
+			JPanel togglePanel = new JPanel(new BorderLayout());
+			togglePanel.add(toggleUpdateButton, BorderLayout.NORTH);
+			togglePanel.add(toggleColorButton, BorderLayout.SOUTH);
+			
+			//Setup dump panels
+			this.dumpPanels = new ArrayList<DumpPanel>();
+			this.dumpPanels.add(new DumpPanel(gui, "gotodump1"));
+			this.dumpPanels.add(new DumpPanel(gui, "gotodump2"));
+			this.dumpPanels.add(new DumpPanel(gui, "gotodump3"));
+			this.dumpPanels.add(new DumpPanel(gui, "gotodump4"));
+			
+			this.dumpTabbedPanel = new JTabbedPane();
+			for(int i = 0; i < dumpPanels.size(); i++)
+			{
+				this.dumpTabbedPanel.add(this.dumpPanels.get(i), "Dump" + i);
 			}
-		});
-
-		panel.add(this.aboutButton);
-
-		panel.add(this.statusLabel);
-
-		this.controlPanel.add(panel);
-		this.controlPanel.add(this.commandPanel);
-		this.controlPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Controls"),
-				BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-		this.controlPanel.setVisible(true);
+			
+			this.breakpointsPanel = new BreakpointTablePanel(gui);
+			
+			//Setup Dump and breakpoints panel
+			dumpAndBreakpointsPanel = new JPanel(new BorderLayout());
+			this.dumpAndBreakpointsPanel.add(this.breakpointsPanel, BorderLayout.NORTH);
+			this.dumpAndBreakpointsPanel.add(this.dumpTabbedPanel, BorderLayout.SOUTH);
+			this.dumpAndBreakpointsPanel.setPreferredSize(new Dimension(300, 550));
+			
+			//Setup stack
+			this.stackPanel = new JPanel(new BorderLayout());
+			this.stackText = new JTextArea();
+			
+			this.stackPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Stack"),
+					BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+			JScrollPane stackScrollPane = new JScrollPane(new StackTablePanel(gui));
+			this.stackPanel.add(stackScrollPane, "North");
+			stackScrollPane.setVerticalScrollBarPolicy(22);
+			stackScrollPane.setHorizontalScrollBarPolicy(32);
+			stackScrollPane.setPreferredSize(new Dimension(225, 480));
+			this.stackText.setEditable(false);
+			stackScrollPane.setVisible(true);
+			
+			//Setup the buttons
+			this.lc4Button = new JButton("Generate Flow Chart/Graph/How your code looks like");
+			this.stackPanel.add(lc4Button, "South");
+			this.lc4Button.setActionCommand(lc4ButtonCommand);
+			this.lc4Button.addActionListener(gui);
+			
+			this.lc4DisassemblerButton = new JButton("Diassemble LC4");
+			this.stackPanel.add(lc4DisassemblerButton);
+			this.lc4DisassemblerButton.setActionCommand(lc4DisassemblerButtonCommand);
+			this.lc4DisassemblerButton.addActionListener(gui);
+			
+			final JSplitPane splitPane = new JSplitPane(1, true, this.dumpAndBreakpointsPanel, this.stackPanel);
+			
+			//Add toggle button to the south
+			this.add(togglePanel, BorderLayout.SOUTH);
+			this.add(splitPane, BorderLayout.CENTER);
+		}
+		
+		public JToggleButton GetToggleUpdateButton()
+		{
+			return this.toggleUpdateButton;
+		}
+		
+		public JToggleButton GetToggleColorButton()
+		{
+			return this.toggleColorButton;
+		}
 	}
+	
+	class MemoryDumpTablePanel extends JPanel
+	{
+		private JTable memDumpTable;
+		private JScrollPane memScrollPane;
+		
+		MemoryDumpTablePanel(GUI gui)
+		{
+			//Setup layout
+			this.setLayout(new BorderLayout());
 
-	private void setupRegisterPanel() {
-		this.registerPanel.add(this.regTable);
-		this.registerPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Registers"),
-				BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-		this.registerPanel.setVisible(true);
+			//Init memDumpTable
+			this.memDumpTable = new JTable(mac.getMemory()) {
+				@Override
+				public Component prepareRenderer(final TableCellRenderer tableCellRenderer, final int n, final int n2) {
+					final Component prepareRenderer = super.prepareRenderer(tableCellRenderer, n, n2);
+					if (n2 == 0) {
+						final JCheckBox checkBox = new JCheckBox();
+						if (n < 65024) {
+							if (GUI.this.mac.getMemory().isBreakPointSet(n)) {
+								checkBox.setSelected(true);
+								checkBox.setBackground(GUI.BreakPointColor);
+								checkBox.setForeground(GUI.BreakPointColor);
+							} else {
+								checkBox.setSelected(false);
+								checkBox.setBackground(this.getBackground());
+							}
+						} else {
+							checkBox.setEnabled(false);
+							checkBox.setBackground(Color.lightGray);
+						}
+						return checkBox;
+					}
+					if (n == GUI.this.mac.getRegisterFile().getPC()) {
+						prepareRenderer.setBackground(GUI.PCColor);
+					} else if (GUI.this.mac.getMemory().isBreakPointSet(n)) {
+						prepareRenderer.setBackground(GUI.BreakPointColor);
+					} else {
+						prepareRenderer.setBackground(this.getBackground());
+						// Word word = GUI.this.mac.getMemory().getWord(n);
+						// if(word != null && toggleColorButton.isSelected()) {
+						// try {
+						// if(ISA.getInstruction(word).isPseudo()) {
+						// prepareRenderer.setBackground(Color.GRAY);
+						// } else if(ISA.getInstruction(word).isData()) {
+						// prepareRenderer.setBackground(Color.GREEN);
+						// } else if(ISA.getInstruction(word).isDirective()) {
+						// prepareRenderer.setBackground(Color.CYAN);
+						// } else if(ISA.getInstruction(word).isCall()) {
+						// prepareRenderer.setBackground(Color.CYAN);
+						// } else if(ISA.getInstruction(word).isBranch()) {
+						// prepareRenderer.setBackground(Color.YELLOW);
+						// } else if(ISA.getInstruction(word).isLoad()) {
+						// prepareRenderer.setBackground(new Color(102, 255, 102,
+						// 155));
+						// } else if(ISA.getInstruction(word).isStore()) {
+						// prepareRenderer.setBackground(Color.MAGENTA);
+						// }
+						// } catch (Exception ex) {
+						// //nothing
+						// }
+						// }
+					}
+					return prepareRenderer;
+				}
+
+				@Override
+				public Object getValueAt(final int n, final int n2) {
+					Object o = null;
+					switch (n2) {
+					case 0: {
+						o = new Boolean(mac.getMemory().isBreakPointSet(n));
+						break;
+					}
+					case 1: {
+						final String lookupAddr = mac.getSymTable().lookupAddr(n);
+						o = ((lookupAddr != null) ? lookupAddr : Word.toHex(n));
+						break;
+					}
+					case 2: {
+						if (n < 65024) {
+							o = mac.getMemory().getWord(n).toHex();
+							break;
+						}
+						o = "???";
+						break;
+					}
+					}
+					return o;
+				}
+
+				@Override
+				public void tableChanged(final TableModelEvent tableModelEvent) {
+					if (mac != null) {
+						super.tableChanged(tableModelEvent);
+					}
+				}
+
+				@Override
+				public boolean isCellEditable(final int n, final int n2) {
+					return (n2 == 2);
+				}
+				
+			};
+			
+			this.memScrollPane = new JScrollPane(this.memDumpTable) {
+				@Override
+				public JScrollBar createVerticalScrollBar() {
+					return new HighlightScrollBar(mac);
+				}
+			};
+
+			this.memScrollPane.getVerticalScrollBar()
+					.setBlockIncrement(this.memDumpTable.getModel().getRowCount() / 512);
+			this.memScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+			
+			this.memDumpTable.getModel().addTableModelListener(gui);
+			this.memDumpTable.getModel().addTableModelListener((TableModelListener) this.memScrollPane.getVerticalScrollBar());
+			this.memDumpTable.setPreferredScrollableViewportSize(new Dimension(220, 200));
+			if (!PennSim.isDoubleBufferedVideo()) {
+				memDumpTable.getModel().addTableModelListener(gui.devicePanel.GetVideo());
+			}
+			
+			final TableColumn column3 = this.memDumpTable.getColumnModel().getColumn(0);
+			column3.setMaxWidth(20);
+			column3.setMinWidth(20);
+			column3.setCellEditor(new DefaultCellEditor(new JCheckBox()));
+			final TableColumn column4 = this.memDumpTable.getColumnModel().getColumn(1);
+			column4.setMinWidth(100);
+			column4.setPreferredWidth(100);
+			column4.setMaxWidth(1000);
+			final TableColumn column5 = this.memDumpTable.getColumnModel().getColumn(2);
+			column5.setMinWidth(100);
+			column5.setPreferredWidth(100);
+			column5.setMaxWidth(1000);
+			
+			this.memDumpTable.scrollRectToVisible(this.memDumpTable.getCellRect(16384, 0, true));
+			
+			//add the pane to panel
+			this.add(memScrollPane);
+			this.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Memory Dump (For looking at data)"),
+					BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+		}
+		
+		public JTable GetMemDumpTable()
+		{
+			return this.memDumpTable;
+		}
 	}
-
-	private void setupDevicePanel() {
-		this.devicePanel.setLayout(new BoxLayout(this.devicePanel, 1));
-		this.devicePanel.add(this.video);
-		this.devicePanel.add(this.ioPanel);
-		this.devicePanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Devices"),
-				BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-		this.devicePanel.setVisible(true);
+	
+	/**
+	 * 
+	 * Dump panel consisting of memory table and goto panel
+	 *
+	 */
+	
+	class DumpPanel extends JPanel
+	{
+		public LineGoToPanel lineGoToPanel;
+		public MemoryDumpTablePanel memoryTablePanel;
+		
+		public String commandText;
+		DumpPanel(GUI gui, String commandText)
+		{
+			this.commandText = commandText;
+			
+			//Setup layout
+			this.setLayout(new BorderLayout());
+			
+			//Init panels
+			lineGoToPanel = new LineGoToPanel(gui, "Line Number:", "Go to line", commandText);
+			memoryTablePanel = new MemoryDumpTablePanel(gui);
+			
+			//Add the two panels
+			this.add(lineGoToPanel, BorderLayout.NORTH);
+			this.add(memoryTablePanel, BorderLayout.CENTER);
+		}
 	}
-
-	private void setupInfoPanel() {
-		this.toggleUpdateButton.setActionCommand("toggle update");
-		this.toggleUpdateButton.addActionListener(this);
-		this.toggleUpdateButton.setSelected(false);
-		JPanel togglePanel = new JPanel(new BorderLayout());
-		togglePanel.add(toggleUpdateButton, "North");
-
-		this.toggleColorButton.setActionCommand("toggle color");
-		this.toggleColorButton.addActionListener(this);
-		this.toggleColorButton.setSelected(false);
-		togglePanel.add(toggleColorButton, "South");
-		this.breakpointsAndStackPanel.add(togglePanel, "South");
-
-		final JSplitPane splitPane = new JSplitPane(1, true, this.dumpAndBreakpointsPanel, this.stackPanel);
-		this.breakpointsAndStackPanel.add(splitPane, "Center");
-
-		this.dumpAndBreakpointsPanel.add(this.breakpointsPanel, "North");
-		this.dumpAndBreakpointsPanel.add(this.memoryDumpAndGoToPanel, "South");
-		this.dumpAndBreakpointsPanel.setPreferredSize(new Dimension(300, 550));
+	
+	class BreakpointTablePanel extends JPanel
+	{
+		private JTable memDumpTable;
+		private JScrollPane memScrollPane;
 		
-		JLabel myLabel = new JLabel("Line Number:");
+		BreakpointTablePanel(GUI gui)
+		{
+			//Setup layout
+			this.setLayout(new BorderLayout());
+			
+			DefaultTableModel breakPointTable = new DefaultTableModel();
+			breakPointTable.addColumn("Address");
+			breakPointTable.addColumn("Value");
 
-		JPanel panel = new JPanel(new BorderLayout());
-		panel.add(myLabel, BorderLayout.WEST);
-		panel.add(gotoDumpText, BorderLayout.CENTER);
-		panel.add(gotoDumpButton, BorderLayout.EAST);
-		this.gotoDumpButton.setActionCommand("gotodump");
-		this.gotoDumpButton.addActionListener(this);
+			//Add to memory
+			mac.getMemory().breakPointTable = breakPointTable;
+			
+			//Init memDumpTable
+			this.memDumpTable = new JTable(breakPointTable);
+			this.memDumpTable.setBackground(new Color(255, 153, 153));
+			
+			this.memScrollPane = new JScrollPane(this.memDumpTable) {
+				@Override
+				public JScrollBar createVerticalScrollBar() {
+					return new JScrollBar();
+				}
+			};
+
+			this.memScrollPane.getVerticalScrollBar()
+					.setBlockIncrement(this.memDumpTable.getModel().getRowCount() / 512);
+			this.memScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+			this.memDumpTable.getModel().addTableModelListener(gui);
+			//this.memDumpTable.getModel().addTableModelListener((TableModelListener) this.memScrollPane.getVerticalScrollBar());
+			this.memDumpTable.setPreferredScrollableViewportSize(new Dimension(220, 200));
+			if (!PennSim.isDoubleBufferedVideo()) {
+				memDumpTable.getModel().addTableModelListener(gui.devicePanel.GetVideo());
+			}
+			
+			final TableColumn column3 = this.memDumpTable.getColumnModel().getColumn(0);
+			column3.setMaxWidth(1000);
+			column3.setMinWidth(100);
+			column3.setCellEditor(new DefaultCellEditor(new JCheckBox()));
+			final TableColumn column4 = this.memDumpTable.getColumnModel().getColumn(1);
+			column4.setMinWidth(100);
+			column4.setPreferredWidth(100);
+			column4.setMaxWidth(1000);
+			
+			this.memDumpTable.scrollRectToVisible(this.memDumpTable.getCellRect(16384, 0, true));
+			
+			//add the pane to panel
+			this.add(memScrollPane);
+			this.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Breakpoints"),
+					BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+		}
 		
-		panel.setPreferredSize(new Dimension(220, 30));
-		this.memoryDumpAndGoToPanel.add(panel, BorderLayout.NORTH);
-		this.memoryDumpAndGoToPanel.add(memoryDumpPanel, BorderLayout.CENTER);
-
-		this.memoryDumpPanel.add(this.memoryDumpScrollPane);
-		this.memoryDumpPanel.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createTitledBorder("Memory Dump (For looking at data)"),
-				BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-		this.memoryDumpTable.getModel().addTableModelListener(this);
-		this.memoryDumpTable.getModel()
-				.addTableModelListener((TableModelListener) this.memoryDumpScrollPane.getVerticalScrollBar());
-		this.memoryDumpTable.setPreferredScrollableViewportSize(new Dimension(220, 200));
-
-		this.memoryDumpTable.scrollRectToVisible(this.memoryDumpTable.getCellRect(16384, 0, true));
-
-		this.breakpointsPanel.setBorder(BorderFactory.createCompoundBorder(
-				BorderFactory.createTitledBorder("Breakpoints"), BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-		JScrollPane breakpointsScrollPane = new JScrollPane(this.breakpointsText);
-		this.breakpointsPanel.add(breakpointsScrollPane);
-		breakpointsScrollPane.setVerticalScrollBarPolicy(22);
-		breakpointsScrollPane.setHorizontalScrollBarPolicy(32);
-		breakpointsScrollPane.setPreferredSize(new Dimension(225, 225));
-		this.breakpointsText.setEditable(false);
-		breakpointsScrollPane.setVisible(true);
-
-		this.stackPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Stack"),
-				BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-		JScrollPane stackScrollPane = new JScrollPane(this.stackText);
-		this.stackPanel.add(stackScrollPane, "North");
-		stackScrollPane.setVerticalScrollBarPolicy(22);
-		stackScrollPane.setHorizontalScrollBarPolicy(32);
-		stackScrollPane.setPreferredSize(new Dimension(225, 480));
-		this.stackText.setEditable(false);
-		stackScrollPane.setVisible(true);
-		
-		stackPanel.add(lc4Button, "South");
-		this.lc4Button.setActionCommand("generate graph");
-		this.lc4Button.addActionListener(this);
-		
-		stackPanel.add(lc4DisassemblerButton);
-		this.lc4DisassemblerButton.setActionCommand("disassemble lc4");
-		this.lc4DisassemblerButton.addActionListener(this);
-		
+		public JTable GetMemDumpTable()
+		{
+			return this.memDumpTable;
+		}
 	}
+	
+	class StackTablePanel extends JPanel
+	{
+		private JTable memDumpTable;
+		private JScrollPane memScrollPane;
+		
+		StackTablePanel(GUI gui)
+		{
+			//Setup layout
+			this.setLayout(new BorderLayout());
+
+			//Init memDumpTable
+			this.memDumpTable = new JTable(mac.getMemory()) {
+				@Override
+				public Component prepareRenderer(final TableCellRenderer tableCellRenderer, final int n, final int n2) {
+					final Component prepareRenderer = super.prepareRenderer(tableCellRenderer, n, n2);
+					if (n2 == 0) {
+						final JCheckBox checkBox = new JCheckBox();
+						if (n < 65024) {
+							if (GUI.this.mac.getMemory().isBreakPointSet(n)) {
+								checkBox.setSelected(true);
+								checkBox.setBackground(GUI.BreakPointColor);
+								checkBox.setForeground(GUI.BreakPointColor);
+							} else {
+								checkBox.setSelected(false);
+								checkBox.setBackground(this.getBackground());
+							}
+						} else {
+							checkBox.setEnabled(false);
+							checkBox.setBackground(Color.lightGray);
+						}
+						return checkBox;
+					}
+					if (n == GUI.this.mac.getRegisterFile().getPC()) {
+						prepareRenderer.setBackground(GUI.PCColor);
+					} else if (GUI.this.mac.getMemory().isBreakPointSet(n)) {
+						prepareRenderer.setBackground(GUI.BreakPointColor);
+					} else {
+						prepareRenderer.setBackground(this.getBackground());
+						// Word word = GUI.this.mac.getMemory().getWord(n);
+						// if(word != null && toggleColorButton.isSelected()) {
+						// try {
+						// if(ISA.getInstruction(word).isPseudo()) {
+						// prepareRenderer.setBackground(Color.GRAY);
+						// } else if(ISA.getInstruction(word).isData()) {
+						// prepareRenderer.setBackground(Color.GREEN);
+						// } else if(ISA.getInstruction(word).isDirective()) {
+						// prepareRenderer.setBackground(Color.CYAN);
+						// } else if(ISA.getInstruction(word).isCall()) {
+						// prepareRenderer.setBackground(Color.CYAN);
+						// } else if(ISA.getInstruction(word).isBranch()) {
+						// prepareRenderer.setBackground(Color.YELLOW);
+						// } else if(ISA.getInstruction(word).isLoad()) {
+						// prepareRenderer.setBackground(new Color(102, 255, 102,
+						// 155));
+						// } else if(ISA.getInstruction(word).isStore()) {
+						// prepareRenderer.setBackground(Color.MAGENTA);
+						// }
+						// } catch (Exception ex) {
+						// //nothing
+						// }
+						// }
+					}
+					return prepareRenderer;
+				}
+
+				@Override
+				public Object getValueAt(final int n, final int n2) {
+					Object o = null;
+					switch (n2) {
+					case 0: {
+						o = new Boolean(mac.getMemory().isBreakPointSet(n));
+						break;
+					}
+					case 1: {
+						final String lookupAddr = mac.getSymTable().lookupAddr(n);
+						o = ((lookupAddr != null) ? lookupAddr : Word.toHex(n));
+						break;
+					}
+					case 2: {
+						if (n < 65024) {
+							o = mac.getMemory().getWord(n).toHex();
+							break;
+						}
+						o = "???";
+						break;
+					}
+					}
+					return o;
+				}
+
+				@Override
+				public void tableChanged(final TableModelEvent tableModelEvent) {
+					if (mac != null) {
+						super.tableChanged(tableModelEvent);
+						
+						//put stack at register 6
+						Stack callStack = gui.mac.getCallStack();
+						if(mac != null && mac.getRegisterFile() != null && !callStack.empty())
+							memDumpTable.scrollRectToVisible(memDumpTable.getCellRect(mac.getRegisterFile().getRegister(6), 0, true));
+					}
+				}
+			};
+			
+			this.memScrollPane = new JScrollPane(this.memDumpTable) {
+				@Override
+				public JScrollBar createVerticalScrollBar() {
+					return new HighlightScrollBar(mac);
+				}
+			};
+
+			this.memScrollPane.getVerticalScrollBar()
+					.setBlockIncrement(this.memDumpTable.getModel().getRowCount() / 512);
+			this.memScrollPane.getVerticalScrollBar().setUnitIncrement(16);
+			
+			this.memDumpTable.getModel().addTableModelListener(gui);
+			this.memDumpTable.getModel().addTableModelListener((TableModelListener) this.memScrollPane.getVerticalScrollBar());
+			this.memDumpTable.setPreferredScrollableViewportSize(new Dimension(220, 200));
+			if (!PennSim.isDoubleBufferedVideo()) {
+				memDumpTable.getModel().addTableModelListener(gui.devicePanel.GetVideo());
+			}
+			
+			final TableColumn column3 = this.memDumpTable.getColumnModel().getColumn(0);
+			column3.setMaxWidth(20);
+			column3.setMinWidth(20);
+			column3.setCellEditor(new DefaultCellEditor(new JCheckBox()));
+			final TableColumn column4 = this.memDumpTable.getColumnModel().getColumn(1);
+			column4.setMinWidth(100);
+			column4.setPreferredWidth(100);
+			column4.setMaxWidth(1000);
+			final TableColumn column5 = this.memDumpTable.getColumnModel().getColumn(2);
+			column5.setMinWidth(100);
+			column5.setPreferredWidth(100);
+			column5.setMaxWidth(1000);
+			
+			this.memDumpTable.scrollRectToVisible(this.memDumpTable.getCellRect(16384, 0, true));
+			
+			//add the pane to panel
+			this.add(memScrollPane);
+		}
+		
+		public JTable GetMemDumpTable()
+		{
+			return this.memDumpTable;
+		}
+	}
+	
+	
+	//==========================================================================================
 
 	public GUI(final Machine mac, final CommandLine commandLine) {
 		this.frame = new JFrame("PennSim Debugger - " + PennSim.version + " - " + PennSim.getISA() + " | edited by Henry Zhu");
@@ -455,42 +1276,17 @@ public class GUI implements ActionListener, TableModelListener {
 		this.menuBar = new JMenuBar();
 		this.fileMenu = new JMenu("File");
 		this.aboutMenu = new JMenu("About");
+		this.resourceMenu = new JMenu("Resources");
+		
 		this.openItem = new JMenuItem("Open .obj File");
 		this.quitItem = new JMenuItem("Quit");
 		this.commandItem = new JMenuItem("Open Command Output Window");
 		this.versionItem = new JMenuItem("Simulator Version");
-		this.controlPanel = new JPanel();
-		this.nextButton = new JButton(nextButtonCommand);
-		this.stepButton = new JButton(stepButtonCommand);
-		this.continueButton = new JButton(continueButtonCommand);
-		this.finishButton = new JButton(finishButtonCommand);
-		this.stopButton = new JButton(stopButtonCommand);
+		this.datapathItem = new JMenuItem("Datapath");
+		this.instructionsItem = new JMenuItem("LC4 Instructions");
+		this.controlSignals1Item = new JMenuItem("Control Signals (Page 1)");
+		this.controlSignals2Item = new JMenuItem("Control Signals (Page 2)");
 		
-		this.memoryAndGoToPanel = new JPanel(new BorderLayout());
-		this.gotoText = new JTextField();
-		this.gotoButton = new JButton("Go to line");
-
-		this.memoryDumpAndGoToPanel = new JPanel(new BorderLayout());
-		this.gotoDumpText = new JTextField();
-		this.gotoDumpButton = new JButton("Go to line");
-
-		this.dataPathButton = new JButton("Open DataPath Chart");
-
-		this.lc4Button = new JButton("Generate Flow Chart/Graph/How your code looks like");
-		this.lc4DisassemblerButton = new JButton("Diassemble LC4");
-
-		this.aboutButton = new JButton("About/Report Issue");
-
-		this.breakpointsAndStackPanel = new JPanel(new BorderLayout());
-		this.dumpAndBreakpointsPanel = new JPanel(new BorderLayout());
-		this.memoryDumpPanel = new JPanel(new BorderLayout());
-		this.breakpointsPanel = new JPanel(new BorderLayout());
-		this.stackPanel = new JPanel(new BorderLayout());
-		this.breakpointsText = new JTextArea();
-		this.stackText = new JTextArea();
-		this.toggleUpdateButton = new JToggleButton("Additional Information Output Disabled");
-		this.toggleColorButton = new JToggleButton("Christmas Syntax Highlighting Disabled");
-
 		this.opcodeText = new JTextField();
 
 		this.opcodePanel = new JPanel(new BorderLayout());
@@ -516,12 +1312,6 @@ public class GUI implements ActionListener, TableModelListener {
 		this.opcodeFrame.setLocationRelativeTo(this.frame);
 		this.opcodeFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 
-		this.statusLabel = new JLabel("");
-		this.runningColor = new Color(43, 129, 51);
-		this.suspendedColor = new Color(209, 205, 93);
-		this.haltedColor = new Color(161, 37, 40);
-		this.memoryPanel = new JPanel(new BorderLayout());
-		this.devicePanel = new JPanel();
 		this.registerPanel = new JPanel();
 		this.dataPathPanel = new JPanel();
 		this.srcPanel = new JPanel(new BorderLayout());
@@ -529,279 +1319,47 @@ public class GUI implements ActionListener, TableModelListener {
 		this.srcScrollPane = new JScrollPane(this.srcText);
 		this.srcScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 		this.mac = mac;
-		this.regTable = new JTable(mac.getRegisterFile());
-		final TableColumn column = this.regTable.getColumnModel().getColumn(0);
-		column.setMaxWidth(30);
-		column.setMinWidth(30);
-		final TableColumn column2 = this.regTable.getColumnModel().getColumn(2);
-		column2.setMaxWidth(30);
-		column2.setMinWidth(30);
-		this.memTable = new JTable(mac.getMemory()) {
-			@Override
-			public Component prepareRenderer(final TableCellRenderer tableCellRenderer, final int n, final int n2) {
-				if (!addedOpcodeListener) {
-					this.addMouseListener(new MouseAdapter() {
-						public void mouseEntered(MouseEvent evt) {
-							if (!opcodeFrame.isVisible()) {
-								opcodeFrame.setVisible(true);
-								opcodeFrame.setLocation(evt.getLocationOnScreen());
-								opcodeFrame.toFront();
-								opcodeFrame.requestFocus();
-								opcodeFrame.repaint();
-								Word word = null;
-								if(memTable.rowAtPoint(evt.getPoint()) != -1)
-									if(GUI.this.mac.getMemory().getWord(memTable.rowAtPoint(evt.getPoint())) != null)
-										word = GUI.this.mac.getMemory().getWord(memTable.rowAtPoint(evt.getPoint()));
-								if (word != null)
-									if (ISA.getInstruction(word) != null)
-										opcodeText.setText("Instruction: " + ISA.disassemble(word, 0, mac)
-												+ " | Bits " + word.toBinary());
-							}
-						}
-
-						public void mouseExited(MouseEvent evt) {
-							if (opcodeFrame.isVisible())
-								opcodeFrame.setVisible(false);
-						}
-
-						public void mousePressed(MouseEvent evt) {
-							// System.out.println("PRESSED");
-						}
-
-						public void mouseReleased(MouseEvent evt) {
-							// System.out.println("RELEASED");
-						}
-					});
-					addedOpcodeListener = true;
-				}
-				final Component prepareRenderer = super.prepareRenderer(tableCellRenderer, n, n2);
-				if (n2 == 0) {
-					final JCheckBox checkBox = new JCheckBox();
-					if (n < 65024) {
-						if (GUI.this.mac.getMemory().isBreakPointSet(n)) {
-							checkBox.setSelected(true);
-							checkBox.setBackground(GUI.BreakPointColor);
-							checkBox.setForeground(GUI.BreakPointColor);
-						} else {
-							checkBox.setSelected(false);
-							checkBox.setBackground(this.getBackground());
-						}
-					} else {
-						checkBox.setEnabled(false);
-						checkBox.setBackground(Color.lightGray);
-					}
-					return checkBox;
-				}
-				if (n == GUI.this.mac.getRegisterFile().getPC()) {
-					prepareRenderer.setBackground(GUI.PCColor);
-				} else if (GUI.this.mac.getMemory().isBreakPointSet(n)) {
-					prepareRenderer.setBackground(GUI.BreakPointColor);
-				} else {
-					prepareRenderer.setBackground(this.getBackground());
-					Word word = GUI.this.mac.getMemory().getWord(n);
-					if (word != null && toggleColorButton.isSelected()) {
-						try {
-							if (ISA.getInstruction(word).isPseudo()) {
-								prepareRenderer.setBackground(Color.GRAY);
-							} else if (ISA.getInstruction(word).isData()) {
-								prepareRenderer.setBackground(Color.GREEN);
-							} else if (ISA.getInstruction(word).isDirective()) {
-								prepareRenderer.setBackground(Color.CYAN);
-							} else if (ISA.getInstruction(word).isCall()) {
-								prepareRenderer.setBackground(Color.CYAN);
-							} else if (ISA.getInstruction(word).isBranch()) {
-								prepareRenderer.setBackground(new Color(255, 255, 140, 155));
-							} else if (ISA.getInstruction(word).isLoad()) {
-								prepareRenderer.setBackground(new Color(102, 255, 102, 155));
-							} else if (ISA.getInstruction(word).isStore()) {
-								prepareRenderer.setBackground(new Color(178, 141, 255, 255));
-							}
-						} catch (Exception ex) {
-							// nothing
-						}
-					}
-				}
-				return prepareRenderer;
-			}
-
-			@Override
-			public void tableChanged(final TableModelEvent tableModelEvent) {
-				if (mac != null) {
-					super.tableChanged(tableModelEvent);
-				}
-			}
-		};
-
+		this.commandLine = commandLine;
+		
+		
+		
+		/**
+		 * SETUP
+		 */
+		this.devicePanel = new DevicePanel(this);
+		this.memoryPanel = new MemoryPanel(this);
+		this.controlPanel = new ControlPanel(this);
+		this.infoPanel = new InfoPanel(this);
+		
+		
+		
 		// dump stuff
-		memoryDumpTable = new JTable(mac.getMemory()) {
-			@Override
-			public Component prepareRenderer(final TableCellRenderer tableCellRenderer, final int n, final int n2) {
-				final Component prepareRenderer = super.prepareRenderer(tableCellRenderer, n, n2);
-				if (n2 == 0) {
-					final JCheckBox checkBox = new JCheckBox();
-					if (n < 65024) {
-						if (GUI.this.mac.getMemory().isBreakPointSet(n)) {
-							checkBox.setSelected(true);
-							checkBox.setBackground(GUI.BreakPointColor);
-							checkBox.setForeground(GUI.BreakPointColor);
-						} else {
-							checkBox.setSelected(false);
-							checkBox.setBackground(this.getBackground());
-						}
-					} else {
-						checkBox.setEnabled(false);
-						checkBox.setBackground(Color.lightGray);
-					}
-					return checkBox;
-				}
-				if (n == GUI.this.mac.getRegisterFile().getPC()) {
-					prepareRenderer.setBackground(GUI.PCColor);
-				} else if (GUI.this.mac.getMemory().isBreakPointSet(n)) {
-					prepareRenderer.setBackground(GUI.BreakPointColor);
-				} else {
-					prepareRenderer.setBackground(this.getBackground());
-					// Word word = GUI.this.mac.getMemory().getWord(n);
-					// if(word != null && toggleColorButton.isSelected()) {
-					// try {
-					// if(ISA.getInstruction(word).isPseudo()) {
-					// prepareRenderer.setBackground(Color.GRAY);
-					// } else if(ISA.getInstruction(word).isData()) {
-					// prepareRenderer.setBackground(Color.GREEN);
-					// } else if(ISA.getInstruction(word).isDirective()) {
-					// prepareRenderer.setBackground(Color.CYAN);
-					// } else if(ISA.getInstruction(word).isCall()) {
-					// prepareRenderer.setBackground(Color.CYAN);
-					// } else if(ISA.getInstruction(word).isBranch()) {
-					// prepareRenderer.setBackground(Color.YELLOW);
-					// } else if(ISA.getInstruction(word).isLoad()) {
-					// prepareRenderer.setBackground(new Color(102, 255, 102,
-					// 155));
-					// } else if(ISA.getInstruction(word).isStore()) {
-					// prepareRenderer.setBackground(Color.MAGENTA);
-					// }
-					// } catch (Exception ex) {
-					// //nothing
-					// }
-					// }
-				}
-				return prepareRenderer;
-			}
+		
 
-			@Override
-			public Object getValueAt(final int n, final int n2) {
-				Object o = null;
-				switch (n2) {
-				case 0: {
-					o = new Boolean(mac.getMemory().isBreakPointSet(n));
-					break;
-				}
-				case 1: {
-					final String lookupAddr = mac.getSymTable().lookupAddr(n);
-					o = ((lookupAddr != null) ? lookupAddr : Word.toHex(n));
-					break;
-				}
-				case 2: {
-					if (n < 65024) {
-						o = mac.getMemory().getWord(n).toHex();
-						break;
-					}
-					o = "???";
-					break;
-				}
-				}
-				return o;
-			}
 
-			@Override
-			public void tableChanged(final TableModelEvent tableModelEvent) {
-				if (mac != null) {
-					super.tableChanged(tableModelEvent);
-				}
-			}
-
-			@Override
-			public boolean isCellEditable(final int n, final int n2) {
-				return (n2 == 2);
-			}
-
-		};
-
-		this.memoryDumpScrollPane = new JScrollPane(this.memoryDumpTable) {
-			@Override
-			public JScrollBar createVerticalScrollBar() {
-				return new HighlightScrollBar(mac);
-			}
-		};
-
-		this.memoryDumpScrollPane.getVerticalScrollBar()
-				.setBlockIncrement(this.memoryDumpTable.getModel().getRowCount() / 512);
-		this.memoryDumpScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-
-		this.memScrollPane = new JScrollPane(this.memTable) {
-			@Override
-			public JScrollBar createVerticalScrollBar() {
-				return new HighlightScrollBar(mac);
-			}
-		};
-		this.memScrollPane.getVerticalScrollBar().setBlockIncrement(this.memTable.getModel().getRowCount() / 512);
-		this.memScrollPane.getVerticalScrollBar().setUnitIncrement(16);
-		final TableColumn column3 = this.memTable.getColumnModel().getColumn(0);
-		column3.setMaxWidth(20);
-		column3.setMinWidth(20);
-		column3.setCellEditor(new DefaultCellEditor(new JCheckBox()));
-		final TableColumn column4 = this.memTable.getColumnModel().getColumn(1);
-		column4.setMinWidth(100);
-		column4.setPreferredWidth(100);
-		column4.setMaxWidth(1000);
-		final TableColumn column5 = this.memTable.getColumnModel().getColumn(2);
-		column5.setMinWidth(100);
-		column5.setPreferredWidth(100);
-		column5.setMaxWidth(1000);
-		this.commandPanel = new CommandLinePanel(mac, commandLine);
-		(this.commandOutputWindow = new CommandOutputWindow("Command Output")).addWindowListener(new WindowListener() {
-			@Override
-			public void windowActivated(final WindowEvent windowEvent) {
-			}
-
-			@Override
-			public void windowClosed(final WindowEvent windowEvent) {
-			}
-
-			@Override
-			public void windowClosing(final WindowEvent windowEvent) {
-				GUI.this.commandOutputWindow.setVisible(false);
-			}
-
-			@Override
-			public void windowDeactivated(final WindowEvent windowEvent) {
-			}
-
-			@Override
-			public void windowDeiconified(final WindowEvent windowEvent) {
-			}
-
-			@Override
-			public void windowIconified(final WindowEvent windowEvent) {
-			}
-
-			@Override
-			public void windowOpened(final WindowEvent windowEvent) {
-			}
-		});
-		this.commandOutputWindow.setSize(700, 600);
-		Console.registerConsole(this.commandPanel);
-		Console.registerConsole(this.commandOutputWindow);
-		(this.ioPanel = new TextConsolePanel(mac.getMemory().getKeyBoardDevice(), mac.getMemory().getMonitorDevice()))
-				.setMinimumSize(new Dimension(256, 85));
-		this.video = new VideoConsole(mac);
+		datapathItem.setActionCommand("Datapath");
+		datapathItem.addActionListener(this);
+		instructionsItem.setActionCommand("Instructions");
+		instructionsItem.addActionListener(this);
+		controlSignals1Item.setActionCommand("Control Signals 1");
+		controlSignals1Item.addActionListener(this);
+		controlSignals2Item.setActionCommand("Control Signals 2");
+		controlSignals2Item.addActionListener(this);
+		
+		this.resourceMenu.add(datapathItem);
+		this.resourceMenu.add(instructionsItem);
+		this.resourceMenu.add(controlSignals1Item);
+		this.resourceMenu.add(controlSignals2Item);
+		
 		this.dataPath = new DataPath(mac, dataPathFrame);
-		this.commandPanel.setGUI(this);
 	}
 
 	public void setUpGUI() {
 		initLookAndFeel();
 		JFrame.setDefaultLookAndFeelDecorated(true);
-		this.mac.setStoppedListener(this.commandPanel);
+		
+		this.mac.setStoppedListener(this.controlPanel.GetCommandPanel());
+		
 		this.fileChooser.setFileSelectionMode(2);
 		this.fileChooser.addChoosableFileFilter(new FileFilter() {
 			@Override
@@ -818,32 +1376,32 @@ public class GUI implements ActionListener, TableModelListener {
 				return "*.obj";
 			}
 		});
-		this.openItem.setActionCommand(openActionCommand);
+		this.openItem.setActionCommand(this.controlPanel.openActionCommand);
 		this.openItem.addActionListener(this);
 		this.fileMenu.add(this.openItem);
-		this.commandItem.setActionCommand(outputWindowActionCommand);
+		this.commandItem.setActionCommand(this.controlPanel.outputWindowActionCommand);
 		this.commandItem.addActionListener(this);
 		this.fileMenu.add(this.commandItem);
 		this.fileMenu.addSeparator();
-		this.quitItem.setActionCommand(quitActionCommand);
+		this.quitItem.setActionCommand(this.controlPanel.quitActionCommand);
 		this.quitItem.addActionListener(this);
 		this.fileMenu.add(this.quitItem);
-		this.versionItem.setActionCommand(versionActionCommand);
+		this.versionItem.setActionCommand(this.controlPanel.versionActionCommand);
 		this.versionItem.addActionListener(this);
 		this.aboutMenu.add(this.versionItem);
 		this.menuBar.add(this.fileMenu);
 		this.menuBar.add(this.aboutMenu);
+		this.menuBar.add(this.resourceMenu);
 		this.frame.setJMenuBar(this.menuBar);
-		this.setupControlPanel();
-		this.setupDevicePanel();
 		this.setupDataPathPanel();
-		this.setupMemoryPanel();
-		this.setupRegisterPanel();
+		
+		/**
+		 * INIT STUFF
+		 */
+		this.registerPanel = new RegisterPanel(this);
 
-		this.setupInfoPanel();
 		// this.setupSrcPanel();
 
-		this.regTable.getModel().addTableModelListener(this);
 		this.frame.getContentPane().setLayout(new BorderLayout());
 		this.frame.getContentPane().add(this.controlPanel, "North");
 		final JPanel panel = new JPanel();
@@ -864,7 +1422,7 @@ public class GUI implements ActionListener, TableModelListener {
 		this.dataPathFrame.setDefaultCloseOperation(JFrame.HIDE_ON_CLOSE);
 		this.dataPathFrame.setVisible(false);
 		panel.add(panel2, "West");
-		final JSplitPane splitPane = new JSplitPane(1, true, this.memoryAndGoToPanel, this.breakpointsAndStackPanel);
+		final JSplitPane splitPane = new JSplitPane(1, true, this.memoryPanel, this.infoPanel);
 		splitPane.resetToPreferredSizes();
 		panel.add(splitPane, "Center");
 		this.frame.setSize(new Dimension(700, 725));
@@ -872,11 +1430,13 @@ public class GUI implements ActionListener, TableModelListener {
 		this.frame.pack();
 		this.frame.setVisible(true);
 		this.scrollToPC();
-		this.commandPanel.actionPerformed(null);
+		
+		this.controlPanel.GetCommandPanel().actionPerformed(null);
 	}
 
 	public void scrollToIndex(final int n) {
-		this.memTable.scrollRectToVisible(this.memTable.getCellRect(n, 0, true));
+		JTable memTable = this.memoryPanel.memoryTablePanel.GetMemTable();
+		memTable.scrollRectToVisible(memTable.getCellRect(n, 0, true));
 	}
 
 	public void scrollToPC() {
@@ -884,7 +1444,8 @@ public class GUI implements ActionListener, TableModelListener {
 	}
 
 	public void scrollToPC(final int n) {
-		this.memTable.scrollRectToVisible(this.memTable.getCellRect(this.mac.getRegisterFile().getPC() + n, 0, true));
+		JTable memTable = this.memoryPanel.memoryTablePanel.GetMemTable();
+		memTable.scrollRectToVisible(memTable.getCellRect(this.mac.getRegisterFile().getPC() + n, 0, true));
 	}
 
 	@Override
@@ -908,53 +1469,91 @@ public class GUI implements ActionListener, TableModelListener {
 			try {
 				this.scrollToIndex(Integer.parseInt(actionEvent.getActionCommand()));
 			} catch (NumberFormatException ex2) {
-				if (nextButtonCommand.equals(actionEvent.getActionCommand())) {
+				if (this.controlPanel.nextButtonCommand.equals(actionEvent.getActionCommand())) {
 					this.mac.executeNext();
-				} else if (stepButtonCommand.equals(actionEvent.getActionCommand())) {
+				} else if (this.controlPanel.stepButtonCommand.equals(actionEvent.getActionCommand())) {
 					this.mac.executeStep();
-				} else if (continueButtonCommand.equals(actionEvent.getActionCommand())) {
+				} else if (this.controlPanel.continueButtonCommand.equals(actionEvent.getActionCommand())) {
 					this.mac.executeMany();
-				} else if (finishButtonCommand.equals(actionEvent.getActionCommand())) {
+				} else if (this.controlPanel.finishButtonCommand.equals(actionEvent.getActionCommand())) {
 					this.mac.executeFin();
-				} else if (quitActionCommand.equals(actionEvent.getActionCommand())) {
+				} else if (this.controlPanel.quitActionCommand.equals(actionEvent.getActionCommand())) {
 					this.confirmExit();
-				} else if (stopButtonCommand.equals(actionEvent.getActionCommand())) {
+				} else if (this.controlPanel.stopButtonCommand.equals(actionEvent.getActionCommand())) {
 					Console.println(this.mac.stopExecution(true));
-				} else if (outputWindowActionCommand.equals(actionEvent.getActionCommand())) {
-					this.commandOutputWindow.setVisible(true);
-				} else if (versionActionCommand.equals(actionEvent.getActionCommand())) {
-					JOptionPane.showMessageDialog(this.frame, PennSim.getVersion(), versionActionCommand, 1);
+				} else if (this.controlPanel.outputWindowActionCommand.equals(actionEvent.getActionCommand())) {
+					this.controlPanel.commandOutputWindow.setVisible(true);
+				} else if (this.controlPanel.versionActionCommand.equals(actionEvent.getActionCommand())) {
+					JOptionPane.showMessageDialog(this.frame, PennSim.getVersion(), this.controlPanel.versionActionCommand, 1);
 				} else if ("DataPath".equals(actionEvent.getActionCommand())) {
 					if (!this.dataPathFrame.isVisible())
 						this.dataPathFrame.setVisible(true);
 					else
 						this.dataPathFrame.setVisible(false);
 				} else if ("goto".equals(actionEvent.getActionCommand())) {
-					this.scrollToIndex(Word.parseNum(gotoText.getText()));
-				} else if ("gotodump".equals(actionEvent.getActionCommand())) {
-					this.memoryDumpTable.scrollRectToVisible(
-							this.memoryDumpTable.getCellRect(Word.parseNum(gotoDumpText.getText()), 0, true));
-				} else if ("toggle update".equals(actionEvent.getActionCommand())) {
-					if (toggleUpdateButton.isSelected()) {
-						toggleUpdateButton.setText("Additional Information Output Enabled");
+					JTextField gotoTextField = this.memoryPanel.lineGoToPanel.GetGoToText();
+					this.scrollToIndex(Word.parseNum(gotoTextField.getText()));
+				} else if (this.infoPanel.toggleUpdateString.equals(actionEvent.getActionCommand())) {
+					if (this.infoPanel.toggleUpdateButton.isSelected()) {
+						this.infoPanel.toggleUpdateButton.setText("Additional Information Output Enabled");
 					} else {
-						toggleUpdateButton.setText("Additional Information Output Disabled");
+						this.infoPanel.toggleUpdateButton.setText("Additional Information Output Disabled");
 					}
-				} else if ("toggle color".equals(actionEvent.getActionCommand())) {
-					if (toggleColorButton.isSelected()) {
-						toggleColorButton.setText("Christmas Syntax Highlighting Enabled");
+				} else if (this.infoPanel.toggleColorButton.equals(actionEvent.getActionCommand())) {
+					if (this.infoPanel.toggleColorButton.isSelected()) {
+						this.infoPanel.toggleColorButton.setText("Christmas Syntax Highlighting Enabled");
 					} else {
-						toggleColorButton.setText("Christmas Syntax Highlighting Disabled");
+						this.infoPanel.toggleColorButton.setText("Christmas Syntax Highlighting Disabled");
 					}
 				} else if ("generate graph".equals(actionEvent.getActionCommand())) {
 					this.generateLc4Graph();
 				} else if ("disassemble lc4".equals(actionEvent.getActionCommand())) {
 					this.generateLC4Diassembly();
+				} else if ("Instructions".equals(actionEvent.getActionCommand())) {
+					this.generateJPG("/resources/LC4_Instructions.jpg");
+				} else if ("Datapath".equals(actionEvent.getActionCommand())) {
+					this.generateJPG("/resources/LC4_DataPath.jpg");
+				} else if ("Control Signals 1".equals(actionEvent.getActionCommand())) {
+					this.generateJPG("/resources/LC4_Control_Signals_1.jpg");
+				} else if ("Control Signals 2".equals(actionEvent.getActionCommand())) {
+					this.generateJPG("/resources/LC4_Control_Signals_2.jpg");
+				}
+					
+				//check if dump was called
+				for(int i = 0; i < this.infoPanel.dumpPanels.size(); i++)
+				{
+					if (this.infoPanel.dumpPanels.get(i).commandText.equals(actionEvent.getActionCommand())) {
+						//attempt to parse the input as a number
+						int parsedValue = Word.parseNum(this.infoPanel.dumpPanels.get(i).lineGoToPanel.gotoText.getText());
+						if(parsedValue != Integer.MAX_VALUE && parsedValue <= 0xFFFF)
+						{
+					this.infoPanel.dumpPanels.get(i).memoryTablePanel.GetMemDumpTable().scrollRectToVisible(
+							this.infoPanel.dumpPanels.get(i).memoryTablePanel.GetMemDumpTable().getCellRect(parsedValue, 0, true));
+						}
+					}
 				}
 			}
 		} catch (ExceptionException ex) {
 			ex.showMessageDialog(this.frame);
 		}
+	}
+
+	public void generateJPG(String path) {
+		BufferedImage img = null;
+		try {
+		    img = ImageIO.read(PennSim.class.getResource(path));
+		} catch (IOException e) {
+		    e.printStackTrace();
+		}
+		Image scaledImg = img.getScaledInstance(img.getWidth() * 2 / 5, 
+				img.getHeight() * 2 / 5, Image.SCALE_SMOOTH);
+		ImageIcon icon = new ImageIcon(scaledImg);
+		JDialog dialog = new JDialog();
+		JLabel label = new JLabel(icon);
+		dialog.add(label);
+		label.setPreferredSize(dialog.getPreferredSize());
+		dialog.pack();
+		dialog.setVisible(true);
 	}
 
 	public static void initLookAndFeel() {
@@ -995,18 +1594,15 @@ public class GUI implements ActionListener, TableModelListener {
 	}
 
 	public void setStatusLabelRunning() {
-		this.statusLabel.setText(statusLabelRunning);
-		this.statusLabel.setForeground(this.runningColor);
+		this.controlPanel.SetStatusLabelRunning();
 	}
 
 	public void setStatusLabelSuspended() {
-		this.statusLabel.setText(statusLabelSuspended);
-		this.statusLabel.setForeground(this.suspendedColor);
+		this.controlPanel.SetStatusLabelSuspended();
 	}
 
 	public void setStatusLabelHalted() {
-		this.statusLabel.setText(statusLabelHalted);
-		this.statusLabel.setForeground(this.haltedColor);
+		this.controlPanel.SetStatusLabelHalted();
 	}
 
 	public void setStatusLabel(final boolean b) {
@@ -1016,50 +1612,31 @@ public class GUI implements ActionListener, TableModelListener {
 			this.setStatusLabelHalted();
 		}
 	}
-
-	public void setTextConsoleEnabled(final boolean enabled) {
-		this.ioPanel.setEnabled(enabled);
-	}
-
-	public VideoConsole getVideoConsole() {
-		return this.video;
-	}
-
+	
 	public void update(ControlSignals signals) {
-		if (toggleUpdateButton.isSelected()) {
+		if (this.infoPanel.toggleUpdateButton.isSelected()) {
 			dataPath.UpdateSignals(signals);
 			updateStack();
-			updateBreakPoints();
 		}
 	}
 
 	void updateStack() {
 		Stack callStack = this.mac.getCallStack();
 		Iterator stackIterator = callStack.iterator();
+		/*
 		stackText.setText("");
 		while (stackIterator.hasNext()) {
 			int address = (Integer) stackIterator.next();
 			stackText.append("Function called: " + this.mac.getMemory().getValueAt(address - 1, 2) + "\n"
 					+ "Return Address: " + Word.toHex(address, true) + "\n");
 		}
-	}
-
-	void updateBreakPoints() {
-		int currentBreakPoint = 1;
-		Memory memory = this.mac.getMemory();
-		breakpointsText.setText("");
-		for (int i = 0; i < 65536; i++) {
-			if (memory.isBreakPointSet(i)) {
-				breakpointsText.append(
-						"Breakpoint: " + currentBreakPoint++ + " | " + "Address: " + Word.toHex(i, true) + "\n");
-			}
-		}
+		*/
 	}
 
 	public void reset() {
 		this.setTextConsoleEnabled(true);
-		this.commandPanel.reset();
-		this.video.reset();
+		this.controlPanel.GetCommandPanel().reset();
+		this.devicePanel.GetVideo().reset();
 		this.scrollToPC();
 	}
 

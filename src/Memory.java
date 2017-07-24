@@ -1,4 +1,8 @@
+import java.util.ArrayList;
+import java.util.HashMap;
+
 import javax.swing.table.AbstractTableModel;
+import javax.swing.table.DefaultTableModel;
 
 // 
 // Decompiled by Procyon v0.5.30
@@ -38,7 +42,13 @@ public class Memory extends AbstractTableModel
     private TimerDevice timerDevice;
     private Word[] memArr;
     private String[] colNames;
-    private boolean[] nextBreakPoints;
+    
+    //Map address to row of the table
+	public HashMap<Integer, Integer> addressBreakPoints;
+	//keep track and update other table
+    public DefaultTableModel breakPointTable;
+	
+	private boolean[] nextBreakPoints;
     private boolean[] breakPoints;
     protected final Machine machine;
     public static final int BREAKPOINT_COLUMN = 0;
@@ -84,6 +94,7 @@ public class Memory extends AbstractTableModel
         this.timerDevice = new TimerDevice();
         this.memArr = new Word[65536];
         this.colNames = null;
+        this.addressBreakPoints = new HashMap<Integer, Integer>();
         this.nextBreakPoints = new boolean[65536];
         this.breakPoints = new boolean[65536];
         this.machine = machine;
@@ -155,11 +166,32 @@ public class Memory extends AbstractTableModel
         if(this.breakPoints[n] == true) {
         	this.breakPoints[n] = false;
         	userFeedBack = "Breakpoint removed at " + Word.toHex(n);
+        	
+            //update table
+            if(breakPointTable != null)
+            {
+            	breakPointTable.removeRow(this.addressBreakPoints.get(n));
+            	//delete breakpoint from map
+            	this.addressBreakPoints.remove(n);
+            }
         } else {
         	this.breakPoints[n] = true;
         	userFeedBack = "Breakpoint set at " + Word.toHex(n);
+        	
+            //update table
+            if(breakPointTable != null)
+            {
+            	//add breakpoint to map
+            	if(!addressBreakPoints.containsKey(n))
+            	{
+	            	this.addressBreakPoints.put(n, breakPointTable.getRowCount());
+	
+	            	breakPointTable.addRow(new Object[]{Word.toHex(n, true), this.read(n).toHex(true)});
+            	}
+            }
         }
         this.fireTableCellUpdated(n, -1);
+        
         return userFeedBack;
     }
     
@@ -176,6 +208,15 @@ public class Memory extends AbstractTableModel
             return "Error: Invalid address or label";
         }
         this.breakPoints[n] = false;
+        
+        //update table
+        if(breakPointTable != null)
+        {
+        	breakPointTable.removeRow(this.addressBreakPoints.get(n));
+        	//delete breakpoint from map
+        	this.addressBreakPoints.remove(n);
+        }
+        
         this.fireTableCellUpdated(n, -1);
         return "Breakpoint cleared at " + Word.toHex(n);
     }
@@ -185,6 +226,9 @@ public class Memory extends AbstractTableModel
             this.breakPoints[i] = false;
             this.nextBreakPoints[i] = false;
         }
+        
+    	//delete breakpoint from map
+    	this.addressBreakPoints.clear();
     }
     
     public void setNextBreakPoint(final int n) {
