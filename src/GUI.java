@@ -164,7 +164,7 @@ public class GUI implements ActionListener, TableModelListener {
 	 * Disassembler/Grapher
 	 */
 	
-	private LC4Disassembler lc4Diassembler;
+	private LC4Decompiler lc4Diassembler;
 	
 	private void setupDataPathPanel() {
 		this.dataPathPanel.setLayout(new BoxLayout(this.dataPathPanel, 2));
@@ -181,7 +181,7 @@ public class GUI implements ActionListener, TableModelListener {
 	
 	private void generateLC4Diassembly()
 	{
-		lc4Diassembler = new LC4Disassembler(this.mac);
+		lc4Diassembler = new LC4Decompiler(this.mac);
 
 	}
 

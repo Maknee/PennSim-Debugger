@@ -19,6 +19,9 @@ import java.util.AbstractMap;
 import java.util.ArrayDeque;
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.HashSet;
+import java.util.Hashtable;
+import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
 import java.util.PriorityQueue;
@@ -31,6 +34,7 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JSplitPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTextPane;
 import javax.swing.JViewport;
 import javax.swing.SwingUtilities;
 
@@ -49,8 +53,11 @@ import com.mxgraph.util.mxRectangle;
 import com.mxgraph.view.mxGraph;
 import com.mxgraph.view.mxStylesheet;
 
-public class LC4Disassembler extends JFrame{
+public class LC4Decompiler extends JFrame{
 
+	ArrayList<mxGraph> graphs = new ArrayList<mxGraph>();
+	
+	
 	//static variables
 	Machine mac;
 	mxGraph graph;
@@ -350,13 +357,6 @@ public class LC4Disassembler extends JFrame{
 			LC4Block block = blocks.get(0);
 			DrawBlocks(block);
 			
-			/*
-			for(LC4Block block : blocks)
-			{
-				block.drawCells();
-				System.out.println(block);
-			}
-			*/
 		}
 		
 		boolean ShouldBranch(Word instruction, Word PSR)
@@ -399,137 +399,6 @@ public class LC4Disassembler extends JFrame{
 			}
 		}
 		
-		/*
-		//stack overflow version (causes overflow)
-		void DecodeInstruction(int pc, LC4Block prevBlock)
-		{	
-			//Create a block
-			LC4Block lc4block = new LC4Block();
-			blocks.add(lc4block);
-			
-			//try to add this block to the prev block (the block that called this block)
-			if(prevBlock != null)
-				prevBlock.addNextBlock(lc4block);
-			
-			
-			//loop until a breakpoint
-			int i = 0;
-			//while(!mac.getMemory().isBreakPointSet(pc))
-			while(i < 25)
-			{	
-				//get instruction
-	        	Word instruction = mac.getMemory().checkAndReadNoException(pc);
-	        	
-            	//parse the instruction
-            	InstructionDef instructionDef = ISA.lookupTable[instruction.getValue()];
-            	            	
-            	if(instructionDef.isRet())
-            	{
-            		//add this last instruction (ret) to the block
-            		lc4block.addInstructionBlock(pc, instruction);
-            		
-            		//Decode the next block (pc = callstack.pop)
-            		DecodeInstruction(callStack.pop().getValue(), lc4block);
-            		break;
-            	}
-            	else if(instructionDef.isJump())
-            	{
-            		//add this last instruction (jmp) to the block
-            		lc4block.addInstructionBlock(pc, instruction);
-            		
-            		//Decode the next block (pc = callstack.pop)
-            		DecodeInstruction(pc + 1 + instructionDef.getPCOffset(instruction), lc4block);
-            		break;
-            	}
-            	else if(instructionDef.isJSR())
-            	{
-            		//add this last instruction (jssr) to the block
-            		lc4block.addInstructionBlock(pc, instruction);
-            		
-            		//push pc + 1 on the stack (return address)
-            		callStack.push(new Word(pc + 1));
-            		
-            		//Decode the next block 
-            		DecodeInstruction((pc & 0x8000) | instructionDef.getAbsAligned(instruction) << 4, lc4block);
-            		break;
-            	}
-            	else if(instructionDef.isJSRR())
-            	{
-            		//add this last instruction (jssr) to the block
-            		lc4block.addInstructionBlock(pc, instruction);
-            		
-            		//push pc + 1 on the stack (return address)
-            		callStack.push(new Word(pc + 1));
-            		            		
-            		//Decode the next block 
-            		DecodeInstruction(R7.getValue(), lc4block);
-            		break;
-            	}
-            	else if(instructionDef.isBranch())
-            	{
-            		//add this last instruction (branch) to the block
-            		lc4block.addInstructionBlock(pc, instruction);
-            		
-            		//Decode the next block (pc = pc + 1)
-            		DecodeInstruction(pc + 1, lc4block);
-            		
-            		//Decode the next block if branching
-            		DecodeInstruction(pc + 1 + instructionDef.getPCOffset(instruction), lc4block);
-            		break;
-            	}
-            	else if(instructionDef.isTRAP())
-            	{
-            		//add this last instruction (jssr) to the block
-            		lc4block.addInstructionBlock(pc, instruction);
-            		
-            		//push pc + 1 on the stack (return address)
-            		callStack.push(new Word(pc + 1));
-            		            		
-            		//Decode the next block (will be in trap vector table)
-            		DecodeInstruction(32768 + instruction.getZext(8, 0), lc4block);
-            		break;
-            	}
-            	else if(instructionDef.isCall())
-            	{
-            		
-            	}
-            	else
-            	{
-                	//Check if the instruction sets R7 in anyway (influences jumps)
-            		if(instructionDef.isConst())
-            		{
-            			if(instructionDef.getDReg(instruction) == 7)
-            			{
-            				int resultValue = instructionDef.getSignedImmed(instruction);
-            				R7.setValue(resultValue);
-            			}
-            		}
-            		else if(instructionDef.isConstIMM())
-            		{
-            			if(instructionDef.getDReg(instruction) == 7)
-            			{
-            				int resultValue = instructionDef.getSignedImmed(instruction);
-            				R7.setValue(resultValue);
-            			}
-            		}
-            		else if(instructionDef.isHiConst())
-            		{
-            			if(instructionDef.getDReg(instruction) == 7)
-            			{
-            				int resultValue = R7.getValue() & 0xFF | instructionDef.getUnsignedImmed(instruction) << 8;
-            				R7.setValue(resultValue);
-            			}
-            		}
-
-            		//add the instruction as vertex
-            		lc4block.addInstructionBlock(pc, instruction);
-            		pc++;
-            	}
-            	i++;
-			}   
-		}
-		*/
-
 		//helper to decode (iterative version)
 		void DecodeInstructionIterative(int pc, LC4Block prevBlock, Memory prevMemory, Stack<Word> inputCallStack)
 		{	
@@ -1592,18 +1461,18 @@ public class LC4Disassembler extends JFrame{
 		}
 	}
 
-	public LC4Disassembler(Machine mac)
+	public LC4Decompiler(Machine mac)
 	{
 		super();
 		
 		init(mac);
 	}
 	
-    private void applyStyleToGraph() {
+    private void applyStyleToGraph(mxGraph mxgraph) {
     	
     	
 	    // Settings for vertices
-	    Map<String, Object> vertex = graph.getStylesheet().getDefaultVertexStyle();
+	    Map<String, Object> vertex = mxgraph.getStylesheet().getDefaultVertexStyle();
 	    vertex.put(mxConstants.STYLE_ROUNDED, true);
 	    vertex.put(mxConstants.STYLE_ORTHOGONAL, false);
 	    vertex.put(mxConstants.STYLE_STROKECOLOR, "#000000"); // default is #6482B9
@@ -1624,96 +1493,1678 @@ public class LC4Disassembler extends JFrame{
 	    mxStylesheet style = new mxStylesheet();
 	    style.setDefaultEdgeStyle(edge);
 	    style.setDefaultVertexStyle(vertex);
-	    graph.setStylesheet(style);
+	    mxgraph.setStylesheet(style);
 	}
     
-    public class LC4Analyzer2
+    
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
+    class Address
     {
-    	LC4Analyzer2()
+    	public int address;
+    	public Object vertex;
+    	
+    	public Address(int address)
     	{
-    		//Break everything into functions
-    		BreakIntoFunctions();
+    		this.address = address;
+    		vertex = null;
+    	}
+    }
+    
+	class Block
+	{
+		public ArrayList<Address> addresses = new ArrayList<Address>();
+		public ArrayList<Block> prev_blocks = new ArrayList<Block>();
+		public ArrayList<Block> next_blocks = new ArrayList<Block>();
+		
+		Object vertex;
+		
+		Block()
+		{
+			
+		}
+		
+		public Integer GetStartAddress()
+		{
+			return addresses.get(0).address;
+		}
+		
+		public Integer GetEndAddress()
+		{
+			return addresses.get(addresses.size() - 1).address;
+		}
+		
+		public Integer GetLength()
+		{
+			return addresses.size();
+		}
+		
+		public void AddFunction(int new_address)
+		{
+			addresses.add(new Address(new_address));
+		}
+	}
+    
+    public class BlockAnalyzer
+    {
+    	public Hashtable<Integer, String> entry_points;
+    	public ArrayList<Block> blocks;
+    	BlockAnalyzer()
+    	{
+    		//Get all entry points
+    		GetFunctionEntryPoints();
+    		
+    		blocks = new ArrayList<Block>();
+    		
+    		//Break everything into function blocks
+    		BreakIntoBlocks();
+    		
+    		//Link branch statements
+    		LinkBranches();
     	}
     	
-    	class FunctionBlock
+		public InstructionDef GetInstructionAt(int pc)
+		{
+			//get instruction
+        	Word instruction = mac.getMemory().checkAndReadNoException(pc);
+        	
+        	//parse the instruction
+        	return ISA.lookupTable[instruction.getValue()];
+		}
+    	
+    	//Get all possible entry points from symbol table (cut out symbols from data)
+    	private void GetFunctionEntryPoints()
     	{
-    		ArrayList<Integer> addresses = new ArrayList<Integer>();
-    		FunctionBlock()
+    		//clone entry points
+    		entry_points = (Hashtable<Integer, String>) mac.getSymTable().GetatosTable().clone();
+    		
+    		Iterator<Integer> it = entry_points.keySet().iterator();
+    		while(it.hasNext())
     		{
+    			Integer entry_point_address = it.next();
+    			if((entry_point_address >= 0x2000 && entry_point_address < 0x4000) || entry_point_address >= 0xa000)
+    			{
+    				it.remove();
+    			}
+    		}
+    	}
+    	
+    	public Block CreateBlock(int addr)
+    	{
+			Block block = new Block();
+			
+			//start at entry and continue until
+			//1) nop
+			//2) jmp
+			//3) branch
+			
+        	InstructionDef instructionDef = this.GetInstructionAt(addr);
+        	
+        	while(!instructionDef.isBranch() &&
+        		  !instructionDef.isCall() &&
+        		  !instructionDef.isJSR() &&
+        		  !instructionDef.isJSRR() &&
+        		  !instructionDef.isJump() &&
+        		  !instructionDef.isJumpR() &&
+        		  !instructionDef.isRet() &&
+        		  !instructionDef.isNop() &&
+        		  !instructionDef.isTRAP()
+        		  )
+        	{
+        		//add the instruction
+        		block.AddFunction(addr);
+	        	
+        		addr++;
+        		
+            	//parse the instruction
+            	instructionDef = this.GetInstructionAt(addr);
+        	}
+        	
+    		//add the last instruction
+    		block.AddFunction(addr);
+        	
+        	return block;
+    	}
+    	
+    	//Break entry points into blocks... Does not link them though
+    	public void BreakIntoBlocks()
+    	{
+    		//convert entry_points to PriorityQueue
+    		PriorityQueue<Integer> entries = new PriorityQueue(entry_points.keySet());
+    		
+    		while(!entries.isEmpty())
+    		{
+    			Integer entry = entries.poll();
     			
+    			Block block = CreateBlock(entry);
+    			
+    			blocks.add(block);
     		}
     		
-    		public void AddFunction(int new_address)
+    		//now remove any blocks that are in anther block because we are only iterating through symbols
+    		HashSet<Block> blocks_to_remove = new HashSet<Block>();
+    		for(Block block : blocks)
     		{
-    			addresses.add(new_address);
+    			for(Block inside_block : blocks)
+    			{
+    				//do not remove the same block itself
+    				if(inside_block == block)
+    				{
+    					continue;
+    				}
+    				
+    				//only check for the first address
+    				for(Address address : block.addresses)
+    				{
+    					if(address.address == inside_block.GetStartAddress())
+	    				{
+    						System.out.println(address.address + " -- " + inside_block.GetStartAddress());
+	    					blocks_to_remove.add(inside_block);
+	    					break;
+    					}
+    				}
+    			}
     		}
+    		blocks.removeAll(blocks_to_remove);
     	}
     	
-    	private ArrayList<Integer> GetFunctionEntryPoints()
+    	public void LinkBranches()
     	{
-    		ArrayList<Integer> addresses = new ArrayList<Integer>();
+    		//remove blocks that after branch because we add them to next block 
+    		HashSet<Block> blocks_to_remove = new HashSet<Block>();
+    		Iterator<Block> block_it = blocks.iterator();
+    		while(block_it.hasNext())
+    		{
+    			Block block = block_it.next();
+    			
+    			int last_address = block.GetEndAddress();
+    			
+    			//get instruction
+            	Word instruction = mac.getMemory().checkAndReadNoException(last_address);
+            	
+            	//parse the instruction
+            	InstructionDef instructionDef = ISA.lookupTable[instruction.getValue()];
+            	
+    			if(instructionDef.isBranch())
+    			{
+    				//link this block with the branch block
+    	    		Iterator<Block> branch_block_it = blocks.iterator();
+    	    		while(branch_block_it.hasNext())
+    				{
+    	    			Block branch_block = branch_block_it.next();
+    	    			
+    					//where does the branch go to? - the address after branch execution
+        				if(last_address + 1 + instructionDef.getPCOffset(instruction) == branch_block.GetStartAddress())
+        				{
+        					block.next_blocks.add(branch_block);
+        					branch_block.prev_blocks.add(block);
+        					blocks_to_remove.add(branch_block);
+        					//System.out.println(block.GetStartAddress() + " - " + block.GetEndAddress() + " --- " + branch_block.GetStartAddress());
+        					
+        					//check if the branch and non branch was the same... it's dumb, but it happens
+        					if(branch_block.GetStartAddress().equals(block.GetEndAddress() + 1))
+        					{
+        						continue;
+        					}
+        					
+        					//now create new block that contains the code if jmp does not execute
+        					Block block_if_branch_was_not_executed = CreateBlock(block.GetEndAddress() + 1);
+        					
+        					block.next_blocks.add(block_if_branch_was_not_executed);
+        					
+        					//check which one is branch is bigger and see if one contains the other
+        					Block larger_block = branch_block.addresses.size() > block_if_branch_was_not_executed.addresses.size()
+        							? branch_block : block_if_branch_was_not_executed;
+        					Block smaller_block = branch_block.addresses.size() < block_if_branch_was_not_executed.addresses.size()
+        							? branch_block : block_if_branch_was_not_executed;
+        					
+        					
+        					//UGH THIS IS IN AN ITERATOR. WILL NOT WORK PROPERLY. USE LIKE A DATASTRUCTURE TO REMOVE CODE LATER
+        					Iterator<Address> larger_address_it = larger_block.addresses.iterator();
+        					while(larger_address_it.hasNext())
+        					{
+        						Integer addr = larger_address_it.next().address;
+        						
+        						for(Address smaller_addr : smaller_block.addresses)
+        						{
+        							if(addr.equals(smaller_addr.address))
+        							{
+        								if(larger_block.addresses.size() == 1)
+        								{
+        									//System.out.println("!! " + mac.getSymTable().lookupAddr(block.GetStartAddress()));
+        									//System.out.println(Word.toHex(larger_block.GetStartAddress()));
+        									continue;
+        								}
+        								larger_address_it.remove();
+        								break;
+        							}
+        						}
+        					}
+        					break;
+        				}
+    				}
+    			}
+    		}
+    		blocks.removeAll(blocks_to_remove);
     		
-    		//scan through every
-    		
-    		return addresses;
     	}
     	
-    	public void BreakIntoFunctions()
+		int cellWidth = 200;
+		int cellHeight = 30;
+    	
+    	private Object DrawBlock(Block block, mxGraph mxgraph)
     	{
+			Object vertex = mxgraph.insertVertex(mxgraph.getDefaultParent(), null, "gggggg", 20, 20, cellWidth, cellHeight * block.addresses.size());
+
+    		//Get the last instruction in the current block (will be used in the edge)
+			for(int i = 0; i < block.addresses.size(); i++)
+			{
+				int addr = block.addresses.get(i).address;
+				
+				//get instruction
+	        	Word instruction = mac.getMemory().checkAndReadNoException(addr);
+				
+				InstructionDef instructionDef = ISA.lookupTable[instruction.getValue()];
+        		
+				//get symbol for the current address
+    			String symbolString = mac.getSymTable().lookupAddr(addr);
+
+    			//add symbol if exists
+    			if(symbolString != null)
+				{
+					mxgraph.insertVertex(vertex, null, symbolString, 0, cellHeight * i, cellWidth/3, cellHeight);
+				}
+    			
+    			//add instruction
+    			String instructionString = instructionDef.disassemble(instruction, addr, mac);
+    			
+				mxgraph.insertVertex(vertex, null, Word.toHex(addr, true) + " " + instructionString, cellWidth/3, cellHeight * i, 2*cellWidth/3, cellHeight);
+    			
+    			//System.out.println(Word.toHex(addr, true));
+			}
+			
+			return vertex;
+    	}
+    	
+    	//recursive call to draw next blocks
+    	private void DrawNextBlock(Block block, mxGraph mxgraph, Object prev_block_vertex)
+    	{	
+			//Link this block to the next block
+			for(Block next_block : block.next_blocks)
+			{
+				//check if any next blocks contain previous blocks (loops again)
+				if(block.prev_blocks.contains(next_block))
+				{
+					break;
+				}
+				
+				int addr = block.GetEndAddress();
+				
+				//get instruction
+	        	Word instruction = mac.getMemory().checkAndReadNoException(addr);
+				
+				InstructionDef instructionDef = ISA.lookupTable[instruction.getValue()];
+	        	
+    			//get instruction string
+    			String instructionString = instructionDef.disassemble(instruction, addr, mac);
+	        	
+    			Object next_block_vertex = DrawBlock(next_block, mxgraph);
+    			
+    			mxgraph.insertEdge(mxgraph.getDefaultParent(), null, Word.toHex(block.GetEndAddress(), true) + " " + instructionString, prev_block_vertex, next_block_vertex);
+    			
+    			//check for loops
+    			if(next_block.GetStartAddress().equals(block.GetStartAddress()) || next_block.GetStartAddress().equals(block.GetEndAddress()) ||
+    			   next_block.GetEndAddress().equals(block.GetStartAddress()) || next_block.GetEndAddress().equals(block.GetEndAddress()))
+    			{
+    				continue;
+    			}
+    			
+    			System.out.println(block.GetStartAddress() + " --- " + next_block.GetStartAddress());
+    			
+    			//recursively call to draw next next block's vertices
+    			DrawNextBlock(next_block, mxgraph, next_block_vertex);
+			}
+    	}
+    	
+    	public ClosableTabbedPane GetPanes()
+    	{    		
+    		ClosableTabbedPane subPane = new ClosableTabbedPane() {
+                public boolean tabAboutToClose(int tabIndex) {
+                    int choice = JOptionPane.showConfirmDialog(null, 
+                       "You are about to close this window\nDo you want to proceed ?", 
+                       "Confirmation Dialog", 
+                       JOptionPane.INFORMATION_MESSAGE);
+                    return choice == 0;
+                }
+            };
     		
+    		for(Block block : blocks)
+    		{
+    			//Create graph
+    			mxGraph mxgraph = new mxGraph();
+    			
+    			//get graphParent to graph
+    			Object mxGraphParent = mxgraph.getDefaultParent();
+    			mxgraph.getModel().beginUpdate();
+    			    			
+    			//draw current block
+    			Object current_block_vertex = DrawBlock(block, mxgraph);
+    			
+    			//draw any blocks that current block is linked to
+    			DrawNextBlock(block, mxgraph, current_block_vertex);
+    			
+    			try
+    			{
+    				applyStyleToGraph(mxgraph);
+    				
+    				//mxIGraphLayout layout = new mxHierarchicalLayout(graph);
+    				mxIGraphLayout layout = new ExtendedCompactTreeLayout(mxgraph);
+
+    				layout.execute(mxGraphParent);
+    			}
+    			finally
+    			{
+    				mxgraph.getModel().endUpdate();
+    			}
+    			
+    			 /**
+                 * Disassembly panel
+                 */
+        		
+        		//Disassembly panel that contains graphs, etc
+        		JPanel disassemblyPanel = new JPanel(new BorderLayout());
+        		disassemblyPanel.setVisible(true);
+                
+        		//Graph Component (Similar to JPanel (which is also a component))
+        		mxGraphComponent graphComponent = new mxGraphComponent(mxgraph);
+
+        		//add the graph to disassembly panel
+        		disassemblyPanel.add(graphComponent, BorderLayout.CENTER);
+        		
+   			 	/**
+                 * Decompiled panel
+                 */
+        		
+        		//Decompiled panel that contains code
+        		JPanel decompiledPanel = new JPanel(new BorderLayout());
+        		decompiledPanel.setVisible(true);
+
+        		Decompiler decompiler = new Decompiler(block);
+        		JScrollPane textPane = decompiler.DecompileToCCode();
+        		
+        		decompiledPanel.add(textPane, BorderLayout.CENTER);
+        		
+        		/**
+        		 * Tab panel
+        		 */
+        		
+        		//Tabbing window that keeps track of subroutines clicked
+        		JPanel tabPanel = new JPanel(new BorderLayout());
+        		tabPanel.setVisible(true);
+        		
+        		String symbol_string = mac.getSymTable().lookupAddr(block.GetStartAddress());
+        		
+        		JSplitPane splitPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, disassemblyPanel, decompiledPanel);
+        		splitPanel.setPreferredSize(new Dimension(800, 600));
+        		splitPanel.setVisible(true);
+        		splitPanel.setOneTouchExpandable(true);
+        		
+        		//Create subroutine pane
+        		subPane.addTab(symbol_string, splitPanel);
+    		}
+        	return subPane;
     	}
     }
 	
+    class Decompiler
+    {
+    	Block block;
+    	String c_code;
+    	int indent_spaces = 0;
+    	
+    	public Decompiler(Block block)
+    	{
+    		this.block = block;
+    		this.c_code = new String();
+    	}
+    	
+    	public String Repeat(int count, String with) {
+    	    return new String(new char[count]).replace("\0", with);
+    	}
+    	
+    	private String Indent()
+    	{
+    		return Repeat(indent_spaces, "\t");
+    	}
+    	
+    	private String Write(String str)
+    	{
+    		return Indent() + str + "\n";
+    	}
+    	
+   		final int INSTRUCTION_CMP = 1;
+		final int INSTRUCTION_CMPI = 2;
+		final int INSTRUCTION_CMPU = 3;
+		final int INSTRUCTION_CMPIU = 4;
+		final int INSTRUCTION_NOP = 5;
+		final int INSTRUCTION_CALL = 6;
+		final int INSTRUCTION_BRANCH = 7;
+		final int INSTRUCTION_LDR = 8;
+		final int INSTRUCTION_STR = 9;
+		final int INSTRUCTION_JMP = 10;
+		final int INSTRUCTION_JSR = 11;
+		final int INSTRUCTION_JMPR = 12;
+		final int INSTRUCTION_TRAP = 13;
+		final int INSTRUCTION_RET = 14;
+		final int INSTRUCTION_ADD = 15;
+		final int INSTRUCTION_SUB = 16;
+		final int INSTRUCTION_MUL = 17;
+		final int INSTRUCTION_DIV = 18;
+		final int INSTRUCTION_ADDIMM = 19;
+		final int INSTRUCTION_AND = 20;
+		final int INSTRUCTION_NOT = 21;
+		final int INSTRUCTION_OR = 22;
+		final int INSTRUCTION_XOR = 23;
+		final int INSTRUCTION_ANDIMM = 24;
+		final int INSTRUCTION_CONST = 25;
+		final int INSTRUCTION_HICONST = 26;
+		final int INSTRUCTION_SLL = 27;
+		final int INSTRUCTION_SRA = 28;
+		final int INSTRUCTION_SRL = 29;
+		final int INSTRUCTION_MOD = 30;
+    	
+    	class InstructionBlock
+    	{
+    		/*
+    		public enum InstructionBlockType
+    		{
+           		INSTRUCTION_CMP,
+        		INSTRUCTION_CMPI,
+        		INSTRUCTION_CMPU,
+        		INSTRUCTION_CMPIU,
+        		INSTRUCTION_NOP,
+        		INSTRUCTION_CALL,
+        		INSTRUCTION_BRANCH,
+        		INSTRUCTION_LDR,
+        		INSTRUCTION_STR,
+        		INSTRUCTION_JMP,
+        		INSTRUCTION_JSR,
+        		INSTRUCTION_JMPR,
+        		INSTRUCTION_TRAP,
+        		INSTRUCTION_RET,
+        		INSTRUCTION_ADD,
+        		INSTRUCTION_SUB,
+        		INSTRUCTION_MUL,
+        		INSTRUCTION_DIV,
+        		INSTRUCTION_ADDIMM,
+        		INSTRUCTION_AND,
+        		INSTRUCTION_NOT,
+        		INSTRUCTION_OR,
+        		INSTRUCTION_XOR,
+        		INSTRUCTION_ANDIMM,
+        		INSTRUCTION_CONST,
+        		INSTRUCTION_HICONST,
+        		INSTRUCTION_SLL,
+        		INSTRUCTION_SRA,
+        		INSTRUCTION_SRL,
+        		INSTRUCTION_MOD
+    		}
+    		*/
+    		
+    		int type = 0;
+    		String assembly_string;
+    		String label_string;
+    		String c_string;
+    		InstructionBlock prev;
+    		InstructionBlock next;
+    		String Rd;
+    		String Rs;
+    		String Rt;
+    		String Imm;
+    		
+    		InstructionBlock(Block block, int addr)
+    		{
+				//get instruction
+	        	Word instruction = mac.getMemory().checkAndReadNoException(addr);
+				
+				InstructionDef instructionDef = ISA.lookupTable[instruction.getValue()];
+				
+				//get instruction string
+    			String instructionString = instructionDef.disassemble(instruction, addr, mac);
+    			
+    			String label_string = mac.getSymTable().lookupAddr(addr);
+    			
+    			//
+    			//parse instruction
+    			//
+    			
+    			if(instructionDef.isAdd())
+        		{
+    				type = INSTRUCTION_ADD;
+    				
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			assembly_string += Write(Rd + " = " + Rs + " + " + Rt);
+        		}
+        		else if(instructionDef.isMul())
+        		{
+    				type = INSTRUCTION_MUL;
+    				
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			assembly_string += Write(Rd + " = " + Rs + " * " + Rt);
+        		}
+        		else if(instructionDef.isSub())
+        		{
+    				type = INSTRUCTION_SUB;
+        			
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			assembly_string = Rd + " = " + Rs + Rt;
+        		}
+        		else if(instructionDef.isDiv())
+        		{
+    				type = INSTRUCTION_DIV;
+    				
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			assembly_string += Write(Rd + " = " + Rs + " / " + Rt);
+        		}
+        		else if(instructionDef.isAddIMM())
+        		{
+    				type = INSTRUCTION_ADDIMM;
+        			
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Rs = "R" + instructionDef.getSReg(instruction);
+        			String Imm = "" + instructionDef.getSignedImmed(instruction);
+        			
+        			assembly_string += Write(Rd + " = " + Rs + " + " + Rt);
+        		}
+        		else if(instructionDef.isCMP())
+        		{
+    				type = INSTRUCTION_CMP;
+
+        			String Rs = "R" + instructionDef.getSReg(instruction);
+        			String Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			//assume next instruction is branch
+    	        	Word branch_instruction = mac.getMemory().checkAndReadNoException(++addr);
+    				
+    				InstructionDef branch_instruction_def = ISA.lookupTable[branch_instruction.getValue()];
+        			
+        			if(branch_instruction_def.isBranch())
+        			{
+        				int branch_bits = branch_instruction.getZext(11, 9);
+        				switch (branch_bits)
+        				{
+        				case 0x4:
+        				{
+                			assembly_string += Write("if (" + Rs + " < " + Rt + ")");
+                			assembly_string += Write("{");
+        				}
+        				break;
+        				case 0x6:
+        				{
+                			assembly_string += Write("if (" + Rs + " <= " + Rt + ")");
+                			assembly_string += Write("{");
+        				}
+        				break;
+        				case 0x5:
+        				{
+                			assembly_string += Write("if (" + Rs + " != " + Rt + ")");
+                			assembly_string += Write("{");
+        				}
+        				break;
+        				case 0x2:
+        				{
+                			assembly_string += Write("if (" + Rs + " == " + Rt + ")");
+                			assembly_string += Write("{");
+        				}
+        				break;
+        				case 0x3:
+        				{
+                			assembly_string += Write("if (" + Rs + " >= " + Rt + ")");
+                			assembly_string += Write("{");
+        				}
+        				break;
+        				case 0x1:
+        				{
+                			assembly_string += Write("if (" + Rs + " > " + Rt + ")");
+                			assembly_string += Write("{");
+        				}
+        				break;
+        				default:
+        				{
+                			assembly_string += Write("if (" + Rs + " = " + Rt + ")");
+                			assembly_string += Write("{");
+        				}
+        				break;
+        				}
+        			}
+        			
+        			/*
+        			if(block.next_blocks.size() == 1)
+        			{
+            			//branched statement
+        				indent_spaces++;
+            			assembly_string += Decompileassembly_string(block.next_blocks.get(0));
+        				indent_spaces--;
+           			}
+        			if(block.next_blocks.size() == 2)
+        			{
+            			//branched statement
+        				indent_spaces++;
+            			assembly_string += Decompileassembly_string(block.next_blocks.get(0));
+        				indent_spaces--;
+        				
+            			assembly_string += Write("}");
+            			assembly_string += Write("else");
+            			assembly_string += Write("{");
+        								
+        				//non branched statement
+        				indent_spaces++;
+        				assembly_string += Decompileassembly_string(block.next_blocks.get(1));
+        				indent_spaces--;
+           			}
+        			assembly_string += Write("}");
+        			*/
+        		}
+        		else if(instructionDef.isCMPU())
+        		{
+
+        			
+        		}
+        		else if(instructionDef.isCMPI())
+        		{
+
+        		}
+        		else if(instructionDef.isCMPIU())
+        		{
+
+        		}
+        		else if(instructionDef.isBranch())
+        		{
+        			//assume next instruction is branch
+    	        	Word prev_instruction = mac.getMemory().checkAndReadNoException(addr - 1);
+    				
+    				InstructionDef prev_instruction_def = ISA.lookupTable[prev_instruction.getValue()];
+        			
+    				boolean valid_prev_instruction = false;
+    				
+    				if(prev_instruction_def.isAdd())
+    				{
+    					valid_prev_instruction = true;
+    				}
+    				else if(prev_instruction_def.isMul())
+    				{
+    					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isSub())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isDiv())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isAddIMM())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isAnd())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isOr())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isXor())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isAndIMM())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isLdr())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isHiConst())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isConst())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isSLL())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isSRA())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isSRL())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isMod())
+    				{
+     					valid_prev_instruction = true;
+    				}
+    				
+    				if(valid_prev_instruction)
+    				{
+    					String Rd = "R" + prev_instruction_def.getDReg(prev_instruction);
+        				
+            			if(instructionDef.isBranch())
+            			{
+            				int branch_bits = instruction.getZext(11, 9);
+            				switch (branch_bits)
+            				{
+            				case 0x4:
+            				{
+                    			assembly_string += Write("if (" + Rd + " < 0)");
+                    			assembly_string += Write("{");
+            				}
+            				break;
+            				case 0x6:
+            				{
+                    			assembly_string += Write("if (" + Rd + " <= 0)");
+                    			assembly_string += Write("{");
+            				}
+            				break;
+            				case 0x5:
+            				{
+                    			assembly_string += Write("if (" + Rd + " != 0)");
+                    			assembly_string += Write("{");
+            				}
+            				break;
+            				case 0x2:
+            				{
+                    			assembly_string += Write("if (" + Rd + " == 0)");
+                    			assembly_string += Write("{");
+            				}
+            				break;
+            				case 0x3:
+            				{
+                    			assembly_string += Write("if (" + Rd + " >= 0)");
+                    			assembly_string += Write("{");
+            				}
+            				break;
+            				case 0x1:
+            				{
+                    			assembly_string += Write("if (" + Rd + " > 0)");
+                    			assembly_string += Write("{");
+            				}
+            				break;
+            				default:
+            				{
+                    			assembly_string += Write("if (" + Rd + " = 0)");
+                    			assembly_string += Write("{");
+            				}
+            				break;
+            				}
+            			}
+            			
+            			/*
+            			if(block.next_blocks.size() == 1)
+            			{
+                			//branched statement
+            				indent_spaces++;
+                			assembly_string += Decompileassembly_string(block.next_blocks.get(0));
+            				indent_spaces--;
+               			}
+            			if(block.next_blocks.size() == 2)
+            			{
+                			//branched statement
+            				indent_spaces++;
+                			assembly_string += Decompileassembly_string(block.next_blocks.get(0));
+            				indent_spaces--;
+            				
+                			assembly_string += Write("}");
+                			assembly_string += Write("else");
+                			assembly_string += Write("{");
+            								
+            				//non branched statement
+            				indent_spaces++;
+            				assembly_string += Decompileassembly_string(block.next_blocks.get(1));
+            				indent_spaces--;
+               			}	
+            			assembly_string += Write("}");
+            			*/
+    				}
+        		}
+        		else if(instructionDef.isAnd())
+        		{
+    				type = INSTRUCTION_AND;
+        			
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Rs = "R" + instructionDef.getSReg(instruction);
+        			String Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			assembly_string += Write(Rd + " = " + Rs + " & " + Rt);
+        		}
+        		else if(instructionDef.isNot())
+        		{
+    				type = INSTRUCTION_NOT;
+        			
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Rs = "R" + instructionDef.getSReg(instruction);
+        			
+        			assembly_string += Write(Rd + " = ~" + Rs);
+        		}
+        		else if(instructionDef.isOr())
+        		{
+    				type = INSTRUCTION_OR;
+        			
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Rs = "R" + instructionDef.getSReg(instruction);
+        			String Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			assembly_string += Write(Rd + " = " + Rs + " | " + Rt);
+        		}
+        		else if(instructionDef.isXor())
+        		{
+    				type = INSTRUCTION_XOR;
+        			
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Rs = "R" + instructionDef.getSReg(instruction);
+        			String Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			assembly_string += Write(Rd + " = " + Rs + " ^ " + Rt);
+        		}
+        		else if(instructionDef.isAndIMM())
+        		{
+    				type = INSTRUCTION_ANDIMM;
+    				
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Rs = "R" + instructionDef.getSReg(instruction);
+        			String Imm = Word.toHex(instructionDef.getSignedImmed(instruction), true);
+        			
+        			assembly_string += Write(Rd + " = " + Rs + " & " + Imm);
+        		}
+        		else if(instructionDef.isSLL())
+        		{
+    				type = INSTRUCTION_SLL;
+        			
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Rs = "R" + instructionDef.getSReg(instruction);
+        			String Imm = "" + instructionDef.getUnsignedImmed(instruction);
+        			
+        			assembly_string += Write(Rd + " = " + Rs + " << " + Imm);
+        		}
+        		else if(instructionDef.isSRA())
+        		{
+    				type = INSTRUCTION_SRA;
+        			
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Rs = "R" + instructionDef.getSReg(instruction);
+        			String Imm = "" + instructionDef.getUnsignedImmed(instruction);
+        			
+        			assembly_string += Write(Rd + " = " + Rs + " >> " + Imm + " | (" + Rs + " & 0x8000)");
+        		}
+        		else if(instructionDef.isSRL())
+        		{
+    				type = INSTRUCTION_SRL;
+        			
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Rs = "R" + instructionDef.getSReg(instruction);
+        			String Imm = "" + instructionDef.getUnsignedImmed(instruction);
+        			
+        			assembly_string += Write(Rd + " = " + Rs + " >> " + Imm);
+        		}
+        		else if(instructionDef.isMod())
+        		{
+    				type = INSTRUCTION_MOD;
+        			
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Rs = "R" + instructionDef.getSReg(instruction);
+        			String Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			assembly_string += Write(Rd + " = " + Rs + " % " + Rt);
+        		}
+        		else if(instructionDef.isLoad())
+        		{
+    				type = INSTRUCTION_LDR;
+        			
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Rs = "R" + instructionDef.getSReg(instruction);
+        			String Imm = "" + instructionDef.getSignedImmed(instruction);
+        			
+        			assembly_string += Write(Rs + "[" + Imm + "] = " + Rd);
+        		}
+        		else if(instructionDef.isStore())
+        		{
+    				type = INSTRUCTION_STR;
+    				
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Rs = "R" + instructionDef.getSReg(instruction);
+        			String Imm = "" + instructionDef.getSignedImmed(instruction);
+        			
+        			assembly_string += Write(Rd + " = " + Rs + "[" + Imm + "]");
+        		}
+        		else if(instructionDef.isConst())
+        		{
+    				type = INSTRUCTION_CONST;
+    				
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Imm = Word.toHex(instructionDef.getSignedImmed(instruction), true);
+        			
+        			assembly_string += Write(Rd + " = " + Imm);
+        		}
+        		else if(instructionDef.isConstIMM())
+        		{
+    				type = INSTRUCTION_CONST;
+
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Imm = Word.toHex(instructionDef.getSignedImmed(instruction), true);
+        			
+        			assembly_string += Write(Rd + " = " + Imm);
+        		}
+        		else if(instructionDef.isHiConst())
+        		{
+    				type = INSTRUCTION_HICONST;
+        			
+        			String Rd = "R" + instructionDef.getDReg(instruction);
+        			String Imm = Word.toHex(instructionDef.getUnsignedImmed(instruction), true);
+        			
+        			assembly_string += Write(Rd + " = " + "( " + Rd + " & 0x00FF ) | ( " + Imm + " << 8 )");
+        		}
+    			else
+    			{
+    				assembly_string += Write(instructionString);
+    			}
+				
+    		}
+    		
+    	}
+    	
+    	public void MergeBlocks(ArrayList<InstructionBlock> blocks)
+    	{
+    		HashSet<InstructionBlock> blocks_to_remove = new HashSet<InstructionBlock>();
+    		for(int i = 0; i < blocks.size(); i++)
+    		{	
+    			InstructionBlock block = blocks.get(i);
+    			
+    			if(blocks_to_remove.contains(block))
+    			{
+    				continue;
+    			}
+    			
+    			switch(block.type)
+    			{
+    			case INSTRUCTION_CMP:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_CMPI:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_CMPU:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_CMPIU:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_NOP:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_CALL:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_BRANCH:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_LDR:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_STR:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_JMP:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_JSR:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_JMPR:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_TRAP:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_RET:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_ADD:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_SUB:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_MUL:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_DIV:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_ADDIMM:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_AND:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_NOT:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_OR:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_XOR:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_ANDIMM:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_CONST:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_HICONST:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_SLL:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_SRA:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_SRL:
+    			{
+    				
+    			}
+    			break;
+    			case INSTRUCTION_MOD:
+    			{
+    				
+    			}
+    			break;
+    			}
+    		}
+    		blocks.remove(blocks_to_remove);
+    	}
+    	
+    	public String DecompileBody(Block block)
+    	{    		
+    		String body = new String();
+    		
+    		InstructionBlock prev = null;
+    		
+    		ArrayList<InstructionBlock> blocks = new ArrayList<InstructionBlock>();
+    		
+    		for(int i = 0; i < block.addresses.size(); i++)
+    		{
+    			int addr = block.addresses.get(i).address;
+	        	
+    			/*
+    			InstructionBlock instruction_block = new InstructionBlock(block, addr);
+    			
+    			//link each other
+    			instruction_block.prev = prev;
+    			if(prev != null)
+    			{
+    				prev.next = instruction_block;
+    			}
+    			prev = instruction_block;
+    			
+    			blocks.add(instruction_block);
+    			*/
+    			
+    			//get instruction
+	        	
+    			Word instruction = mac.getMemory().checkAndReadNoException(addr);
+				
+				InstructionDef instructionDef = ISA.lookupTable[instruction.getValue()];
+				
+				//get instruction string
+    			String instructionString = instructionDef.disassemble(instruction, addr, mac);
+    			
+    			String label_string = mac.getSymTable().lookupAddr(addr);
+    			
+    			if(label_string != null)
+    			{
+    				indent_spaces--;
+    				body += label_string;
+    				indent_spaces++;
+    			}
+    			
+    			//
+    			//parse instruction
+    			//
+    			
+    			String Rd;
+    			String Rs;
+    			String Rt;
+    			String Imm;
+    			
+    			if(instructionDef.isAdd())
+        		{   				
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			body += Write(Rd + " = " + Rs + " + " + Rt);
+        		}
+        		else if(instructionDef.isMul())
+        		{    				
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			body += Write(Rd + " = " + Rs + " * " + Rt);
+        		}
+        		else if(instructionDef.isSub())
+        		{        			
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			body = Rd + " = " + Rs + Rt;
+        		}
+        		else if(instructionDef.isDiv())
+        		{    				
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			body += Write(Rd + " = " + Rs + " / " + Rt);
+        		}
+        		else if(instructionDef.isAddIMM())
+        		{        			
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Imm = "" + instructionDef.getSignedImmed(instruction);
+        			
+        			body += Write(Rd + " = " + Rs + " + " + Imm);
+        		}
+        		else if(instructionDef.isCMP())
+        		{
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			//assume next instruction is branch
+    	        	Word branch_instruction = mac.getMemory().checkAndReadNoException(++addr);
+    				
+    				InstructionDef branch_instruction_def = ISA.lookupTable[branch_instruction.getValue()];
+        			
+        			if(branch_instruction_def.isBranch())
+        			{
+        				int branch_bits = branch_instruction.getZext(11, 9);
+        				switch (branch_bits)
+        				{
+        				case 0x4:
+        				{
+                			body += Write("if (" + Rs + " < " + Rt + ")");
+                			body += Write("{");
+        				}
+        				break;
+        				case 0x6:
+        				{
+                			body += Write("if (" + Rs + " <= " + Rt + ")");
+                			body += Write("{");
+        				}
+        				break;
+        				case 0x5:
+        				{
+                			body += Write("if (" + Rs + " != " + Rt + ")");
+                			body += Write("{");
+        				}
+        				break;
+        				case 0x2:
+        				{
+                			body += Write("if (" + Rs + " == " + Rt + ")");
+                			body += Write("{");
+        				}
+        				break;
+        				case 0x3:
+        				{
+                			body += Write("if (" + Rs + " >= " + Rt + ")");
+                			body += Write("{");
+        				}
+        				break;
+        				case 0x1:
+        				{
+                			body += Write("if (" + Rs + " > " + Rt + ")");
+                			body += Write("{");
+        				}
+        				break;
+        				default:
+        				{
+                			body += Write("if (" + Rs + " = " + Rt + ")");
+                			body += Write("{");
+        				}
+        				break;
+        				}
+        			}
+        			
+        			if(block.next_blocks.size() == 1)
+        			{
+            			//branched statement
+        				indent_spaces++;
+            			body += DecompileBody(block.next_blocks.get(0));
+        				indent_spaces--;
+           			}
+        			if(block.next_blocks.size() == 2)
+        			{
+            			//branched statement
+        				indent_spaces++;
+            			body += DecompileBody(block.next_blocks.get(0));
+        				indent_spaces--;
+        				
+            			body += Write("}");
+            			body += Write("else");
+            			body += Write("{");
+        								
+        				//non branched statement
+        				indent_spaces++;
+        				body += DecompileBody(block.next_blocks.get(1));
+        				indent_spaces--;
+           			}
+        			body += Write("}");
+        		}
+        		else if(instructionDef.isCMPU())
+        		{
+
+        			
+        		}
+        		else if(instructionDef.isCMPI())
+        		{
+
+        		}
+        		else if(instructionDef.isCMPIU())
+        		{
+
+        		}
+        		else if(instructionDef.isBranch())
+        		{
+        			//assume next instruction is branch
+    	        	Word prev_instruction = mac.getMemory().checkAndReadNoException(addr - 1);
+    				
+    				InstructionDef prev_instruction_def = ISA.lookupTable[prev_instruction.getValue()];
+        			
+    				boolean valid_prev_instruction = false;
+    				
+    				if(prev_instruction_def.isAdd())
+    				{
+    					valid_prev_instruction = true;
+    				}
+    				else if(prev_instruction_def.isMul())
+    				{
+    					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isSub())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isDiv())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isAddIMM())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isAnd())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isOr())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isXor())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isAndIMM())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isLdr())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isHiConst())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isConst())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isSLL())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isSRA())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isSRL())
+    				{
+     					valid_prev_instruction = true;
+    				}
+     				else if(prev_instruction_def.isMod())
+    				{
+     					valid_prev_instruction = true;
+    				}
+    				
+    				if(valid_prev_instruction)
+    				{
+    					Rd = "R" + prev_instruction_def.getDReg(prev_instruction);
+        				
+            			if(instructionDef.isBranch())
+            			{
+            				int branch_bits = instruction.getZext(11, 9);
+            				switch (branch_bits)
+            				{
+            				case 0x4:
+            				{
+                    			body += Write("if (" + Rd + " < 0)");
+                    			body += Write("{");
+            				}
+            				break;
+            				case 0x6:
+            				{
+                    			body += Write("if (" + Rd + " <= 0)");
+                    			body += Write("{");
+            				}
+            				break;
+            				case 0x5:
+            				{
+                    			body += Write("if (" + Rd + " != 0)");
+                    			body += Write("{");
+            				}
+            				break;
+            				case 0x2:
+            				{
+                    			body += Write("if (" + Rd + " == 0)");
+                    			body += Write("{");
+            				}
+            				break;
+            				case 0x3:
+            				{
+                    			body += Write("if (" + Rd + " >= 0)");
+                    			body += Write("{");
+            				}
+            				break;
+            				case 0x1:
+            				{
+                    			body += Write("if (" + Rd + " > 0)");
+                    			body += Write("{");
+            				}
+            				break;
+            				default:
+            				{
+                    			body += Write("if (" + Rd + " = 0)");
+                    			body += Write("{");
+            				}
+            				break;
+            				}
+            			}
+            			
+            			if(block.next_blocks.size() == 1)
+            			{
+                			//branched statement
+            				indent_spaces++;
+                			body += DecompileBody(block.next_blocks.get(0));
+            				indent_spaces--;
+               			}
+            			if(block.next_blocks.size() == 2)
+            			{
+                			//branched statement
+            				indent_spaces++;
+                			body += DecompileBody(block.next_blocks.get(0));
+            				indent_spaces--;
+            				
+                			body += Write("}");
+                			body += Write("else");
+                			body += Write("{");
+            								
+            				//non branched statement
+            				indent_spaces++;
+            				body += DecompileBody(block.next_blocks.get(1));
+            				indent_spaces--;
+               			}	
+            			body += Write("}");
+    				}
+        		}
+        		else if(instructionDef.isAnd())
+        		{        			
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			body += Write(Rd + " = " + Rs + " & " + Rt);
+        		}
+        		else if(instructionDef.isNot())
+        		{        			
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			
+        			body += Write(Rd + " = ~" + Rs);
+        		}
+        		else if(instructionDef.isOr())
+        		{        			
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			body += Write(Rd + " = " + Rs + " | " + Rt);
+        		}
+        		else if(instructionDef.isXor())
+        		{        			
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			body += Write(Rd + " = " + Rs + " ^ " + Rt);
+        		}
+        		else if(instructionDef.isAndIMM())
+        		{    				
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Imm = Word.toHex(instructionDef.getSignedImmed(instruction), true);
+        			
+        			body += Write(Rd + " = " + Rs + " & " + Imm);
+        		}
+        		else if(instructionDef.isSLL())
+        		{        			
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Imm = "" + instructionDef.getUnsignedImmed(instruction);
+        			
+        			body += Write(Rd + " = " + Rs + " << " + Imm);
+        		}
+        		else if(instructionDef.isSRA())
+        		{        			
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Imm = "" + instructionDef.getUnsignedImmed(instruction);
+        			
+        			body += Write(Rd + " = " + Rs + " >> " + Imm + " | (" + Rs + " & 0x8000)");
+        		}
+        		else if(instructionDef.isSRL())
+        		{        			
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Imm = "" + instructionDef.getUnsignedImmed(instruction);
+        			
+        			body += Write(Rd + " = " + Rs + " >> " + Imm);
+        		}
+        		else if(instructionDef.isMod())
+        		{        			
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Rt = "R" + instructionDef.getTReg(instruction);
+        			
+        			body += Write(Rd + " = " + Rs + " % " + Rt);
+        		}
+        		else if(instructionDef.isLoad())
+        		{        			
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Imm = "" + instructionDef.getSignedImmed(instruction);
+        			
+        			body += Write(Rs + "[" + Imm + "] = " + Rd);
+        		}
+        		else if(instructionDef.isStore())
+        		{    				
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Rs = "R" + instructionDef.getSReg(instruction);
+        			Imm = "" + instructionDef.getSignedImmed(instruction);
+        			
+        			body += Write(Rd + " = " + Rs + "[" + Imm + "]");
+        		}
+        		else if(instructionDef.isConst())
+        		{    				
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Imm = Word.toHex(instructionDef.getSignedImmed(instruction), true);
+        			
+        			body += Write(Rd + " = " + Imm);
+        		}
+        		else if(instructionDef.isConstIMM())
+        		{
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Imm = Word.toHex(instructionDef.getSignedImmed(instruction), true);
+        			
+        			body += Write(Rd + " = " + Imm);
+        		}
+        		else if(instructionDef.isHiConst())
+        		{        			
+        			Rd = "R" + instructionDef.getDReg(instruction);
+        			Imm = Word.toHex(instructionDef.getUnsignedImmed(instruction), true);
+        			
+        			body += Write(Rd + " = " + "( " + Rd + " & 0x00FF ) | ( " + Imm + " << 8 )");
+        		}
+    			else
+    			{
+    				body += Write(instructionString);
+    			}
+				
+    		}
+    		
+    		//combine blocks that are similar
+    		//MergeBlocks(blocks);
+			
+    		return body;
+    	}
+    	
+    	public JScrollPane DecompileToCCode()
+    	{
+    		JTextPane c_code_pane = new JTextPane();
+    		
+    		JScrollPane c_code_scroll_pane = new JScrollPane(c_code_pane);
+    		
+    		String return_type = "int";
+    		
+    		String signature = mac.getSymTable().lookupAddr(block.GetStartAddress()) + "()\n";
+    		
+    		indent_spaces++;
+    		
+    		String body = Write("__asm {");
+    		
+    		indent_spaces++;
+    		
+    		body += DecompileBody(block);
+    		
+    		indent_spaces--;
+    		
+    		body += Write("};");
+    		
+    		indent_spaces--;
+    		
+    		c_code = return_type + " " + signature + "{\n" + body + "}";
+    		
+    		c_code_pane.setText(c_code);
+    		
+    		return c_code_scroll_pane;
+    	}
+    }
+    
+    //!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+    
 	void init(Machine otherMac)
 	{
 		//keep a pointer to machine
 		this.mac = otherMac;
 	
-		//Create graph
-		mxGraph graph = new mxGraph();
-		this.graph = graph;
-		
-		//get graphParent to graph
-		this.graphParent = this.graph.getDefaultParent();
-		graph.getModel().beginUpdate();
-		
-		try
-		{
-	    	//Start with the first instruction to analyze based on the PC and continue from there...		
-			LC4Analyzer analyzer = new LC4Analyzer(this.mac.getRegisterFile().getPC());
-			
-			applyStyleToGraph();
-			/*
-			Object v1 = graph.insertVertex(graphParent, null, "Hello", 20, 20, 80,
-					30);
-			Object v2 = graph.insertVertex(graphParent, null, "World!", 240, 150,
-					80, 30);
-			Object v3 = graph.insertVertex(graphParent, null, "World!", 240, 150,
-					80, 30);
-			Object v4 = graph.insertVertex(graphParent, null, "World!", 240, 150,
-					80, 30);
-			Object v5 = graph.insertVertex(graphParent, null, "World!", 240, 150,
-					80, 30);
-			Object v6 = graph.insertVertex(graphParent, null, "World!", 240, 150,
-					80, 30);
-			graph.insertEdge(graphParent, null, "Edge", v1, v2);
-			graph.insertEdge(graphParent, null, "Edge", v1, v3);
-			graph.insertEdge(graphParent, null, "Edge", v1, v4);
-			graph.insertEdge(graphParent, null, "Edge", v1, v5);
-			graph.insertEdge(graphParent, null, "Edge", v5, v6);
-			graph.insertEdge(graphParent, null, "Edge", v6, v1);
-			*/
-			
-			//mxIGraphLayout layout = new mxHierarchicalLayout(graph);
-			mxIGraphLayout layout = new ExtendedCompactTreeLayout(graph);
-
-			layout.execute(this.graphParent);
-		}
-		finally
-		{
-			graph.getModel().endUpdate();
-		}
-		
 		/**
 		 * Main split panels
 		 */
@@ -1731,53 +3182,22 @@ public class LC4Disassembler extends JFrame{
 		this.mainRightPanel = new JPanel(new BorderLayout());
 		this.mainRightPanel.setVisible(true);
 		
-        /**
-         * Disassembly panel
-         */
-		
-		//Disassembly panel that contains graphs, etc
-		this.disassemblyPanel = new JPanel(new BorderLayout());
-		this.disassemblyPanel.setVisible(true);
-        
-		//Graph Component (Similar to JPanel (which is also a component))
-		mxGraphComponent graphComponent = new mxGraphComponent(graph);
-
-		//add the graph to disassembly panel
-		this.disassemblyPanel.add(graphComponent, BorderLayout.CENTER);
-		
-		/**
-		 * Tab panel
-		 */
-		
-		//Tabbing window that keeps track of subroutines clicked
-		this.tabPanel = new JPanel(new BorderLayout());
-		this.tabPanel.setVisible(true);
-		
-		//Create subroutine pane
-		this.subroutinePane = new ClosableTabbedPane() {
-            public boolean tabAboutToClose(int tabIndex) {
-                String tab = subroutinePane.getTabTitleAt(tabIndex);
-                int choice = JOptionPane.showConfirmDialog(null, 
-                   "You are about to close '" + 
-                   tab + "'\nDo you want to proceed ?", 
-                   "Confirmation Dialog", 
-                   JOptionPane.INFORMATION_MESSAGE);
-                return choice == 0;
-                // if returned false tab
-                // closing will be canceled
-            }
-        };
-
         /** ---------------------------
          * Add tabbed panes here
          *  --------------------------- */
-        this.subroutinePane.add("Main disassembly", disassemblyPanel);
 		
-        //add the pane to the panel
-        this.tabPanel.add(subroutinePane, BorderLayout.CENTER);
-        
+		//Tabbing window that keeps track of subroutines clicked
+		//JTabbedPane tabbedPane = new JTabbedPane();
+		JPanel tabbedPane = new JPanel(new BorderLayout());
+		tabbedPane.setVisible(true);
+		
+		BlockAnalyzer block_analyzer = new BlockAnalyzer();
+		ClosableTabbedPane panes = block_analyzer.GetPanes();
+		tabbedPane.add(panes, BorderLayout.CENTER);
+		
+		
 		//Attach to right panel
-		this.mainRightPanel.add(tabPanel, BorderLayout.CENTER);
+		this.mainRightPanel.add(tabbedPane, BorderLayout.CENTER);
 		
 		//Create main split panel that contains left/right windows
 		this.mainSplitPanel = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT, mainLeftPanel, mainRightPanel);
@@ -1837,101 +3257,6 @@ public class LC4Disassembler extends JFrame{
                     			outPort.setX(parentBounds.getCenterX());
                     			elbowPoint.setX(parentBounds.getCenterX());
                     		}
-                    		/*
-                    		if(edgePoints.size() > 3)
-                    		{
-                    			//case where edge goes from one to another before it
-                        		mxGeometry geometry = new mxGeometry();
-                        		List<mxPoint> points = new ArrayList<mxPoint>();
-                        		
-                        		mxICell sourceCell = edge.getTerminal(true);
-                        		mxICell destinationCell = edge.getTerminal(false);
-                        		
-                        		if(destinationCell.getGeometry().getCenterX() < sourceCell.getGeometry().getCenterX() && 
-                        		   destinationCell.getGeometry().getCenterY() < sourceCell.getGeometry().getCenterY())
-                        		{
-                            		double distanceDiff = sourceCell.getGeometry().getCenterX() - destinationCell.getGeometry().getCenterX();
-                        			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() + distanceDiff/2, sourceCell.getGeometry().getCenterY()));
-                        			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() + distanceDiff/2, destinationCell.getGeometry().getCenterY()));	
-                        		}
-                        		else if(destinationCell.getGeometry().getCenterX() > sourceCell.getGeometry().getCenterX() && 
-                        		   destinationCell.getGeometry().getCenterY() < sourceCell.getGeometry().getCenterY())
-                        		{
-                        			double distanceDiff = destinationCell.getGeometry().getCenterX() - sourceCell.getGeometry().getCenterX();
-                        			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() - distanceDiff/2, sourceCell.getGeometry().getCenterY()));
-                        			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() - distanceDiff/2, destinationCell.getGeometry().getCenterY()));	
-                        		}
-                        		else if(destinationCell.getGeometry().getCenterX() < sourceCell.getGeometry().getCenterX() && 
-                        				destinationCell.getGeometry().getCenterY() > sourceCell.getGeometry().getCenterY())
-                        		{
-                            		double distanceDiff = sourceCell.getGeometry().getCenterX() - destinationCell.getGeometry().getCenterX();
-                        			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() + distanceDiff/2, destinationCell.getGeometry().getCenterY()));	
-                        			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() + distanceDiff/2, sourceCell.getGeometry().getCenterY()));
-                        		}
-                        		else if(destinationCell.getGeometry().getCenterX() > sourceCell.getGeometry().getCenterX() && 
-                             		   destinationCell.getGeometry().getCenterY() > sourceCell.getGeometry().getCenterY())
-                        		{
-                        			double distanceDiff = destinationCell.getGeometry().getCenterX() - sourceCell.getGeometry().getCenterX();
-                        			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() - distanceDiff/2, destinationCell.getGeometry().getCenterY()));	
-                        			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() - distanceDiff/2, sourceCell.getGeometry().getCenterY()));
-                        		}
-                        		else
-                        		{
-                        			if(destinationCell.getGeometry().getCenterY() > sourceCell.getGeometry().getCenterY())
-                        			{
-                        				
-                        			}
-                        			else
-                        			{
-                        				points.add(new mxPoint(destinationCell.getGeometry().getCenterX() - 100, sourceCell.getGeometry().getCenterY()));
-                            			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() - 100, destinationCell.getGeometry().getCenterY()));
-                        			}
-                        		}
-                        		geometry.setPoints(points);
-                        		edge.setGeometry(geometry);
-                    		}
-                    		*/
-                    	}
-                    	else
-                    	{
-                    		/*
-                    		//case where edge goes from one to another before it
-                    		mxGeometry geometry = new mxGeometry();
-                    		List<mxPoint> points = new ArrayList<mxPoint>();
-                    		
-                    		mxICell sourceCell = edge.getTerminal(true);
-                    		mxICell destinationCell = edge.getTerminal(false);
-                    		
-                    		if(destinationCell.getGeometry().getCenterX() < sourceCell.getGeometry().getCenterX() && 
-                    		   destinationCell.getGeometry().getCenterY() < sourceCell.getGeometry().getCenterY())
-                    		{
-                        		double distanceDiff = sourceCell.getGeometry().getCenterX() - destinationCell.getGeometry().getCenterX();
-                    			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() + distanceDiff/2, sourceCell.getGeometry().getCenterY()));
-                    			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() + distanceDiff/2, destinationCell.getGeometry().getCenterY()));	
-                    		}
-                    		else if(destinationCell.getGeometry().getCenterX() > sourceCell.getGeometry().getCenterX() && 
-                    		   destinationCell.getGeometry().getCenterY() < sourceCell.getGeometry().getCenterY())
-                    		{
-                    			double distanceDiff = destinationCell.getGeometry().getCenterX() - sourceCell.getGeometry().getCenterX();
-                    			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() - distanceDiff/2, sourceCell.getGeometry().getCenterY()));
-                    			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() - distanceDiff/2, destinationCell.getGeometry().getCenterY()));	
-                    		}
-                    		else if(destinationCell.getGeometry().getCenterX() < sourceCell.getGeometry().getCenterX() && 
-                    				destinationCell.getGeometry().getCenterY() > sourceCell.getGeometry().getCenterY())
-                    		{
-                        		double distanceDiff = sourceCell.getGeometry().getCenterX() - destinationCell.getGeometry().getCenterX();
-                    			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() + distanceDiff/2, destinationCell.getGeometry().getCenterY()));	
-                    			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() + distanceDiff/2, sourceCell.getGeometry().getCenterY()));
-                    		}
-                    		else
-                    		{
-                    			double distanceDiff = destinationCell.getGeometry().getCenterX() - sourceCell.getGeometry().getCenterX();
-                    			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() - distanceDiff/2, destinationCell.getGeometry().getCenterY()));	
-                    			points.add(new mxPoint(destinationCell.getGeometry().getCenterX() - distanceDiff/2, sourceCell.getGeometry().getCenterY()));
-                    		}
-                    		geometry.setPoints(points);
-                    		edge.setGeometry(geometry);
-                    		*/
                     	}
                    }
                }

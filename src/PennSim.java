@@ -64,6 +64,7 @@ public class PennSim
             if (array[i].equalsIgnoreCase("-t")) {
                 PennSim.GRAPHICAL_MODE = false;
             }
+            
             else if (array[i].equalsIgnoreCase("-d")) {
                 PennSim.DOUBLE_BUFFERED_VIDEO_MODE = true;
             }

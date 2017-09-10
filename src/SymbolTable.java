@@ -65,6 +65,11 @@ class SymbolTable
         return this.stoaTable.keys();
     }
     
+    public Hashtable<Integer, String> GetatosTable()
+    {
+    	return atosTable;
+    }
+    
     public int numSyms() {
         return this.stoaTable.size();
     }
