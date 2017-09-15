@@ -2999,7 +2999,7 @@ public class LC4Decompiler extends JFrame{
             								
             				//non branched statement
             				indent_spaces++;
-            				body += DecompileBody(block.next_blocks.get(1));
+            				body += DecompileBody	(block.next_blocks.get(1));
             				indent_spaces--;
                			}	
             			body += Write("}");
