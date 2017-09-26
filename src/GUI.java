@@ -158,14 +158,11 @@ public class GUI implements ActionListener, TableModelListener {
 	 * Simple graph
 	 */
 	
-	private LC4Graph lc4Graph;
 	private JButton lc4Button;
 
 	/**
 	 * Disassembler/Grapher
 	 */
-	
-	private LC4Decompiler lc4Diassembler;
 
 
 	/**
