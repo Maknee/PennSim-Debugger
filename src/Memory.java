@@ -170,9 +170,16 @@ public class Memory extends AbstractTableModel
             //update table
             if(breakPointTable != null)
             {
-            	breakPointTable.removeRow(this.addressBreakPoints.get(n));
-            	//delete breakpoint from map
-            	this.addressBreakPoints.remove(n);
+            	Integer row = this.addressBreakPoints.get(n);
+            	if(row != null)
+            	{
+            		if(breakPointTable.getRowCount() > row)
+            		{
+            			breakPointTable.removeRow(row);
+            		}
+	            	//delete breakpoint from map
+	            	this.addressBreakPoints.remove(n);
+            	}
             }
         } else {
         	this.breakPoints[n] = true;
@@ -212,9 +219,16 @@ public class Memory extends AbstractTableModel
         //update table
         if(breakPointTable != null)
         {
-        	breakPointTable.removeRow(this.addressBreakPoints.get(n));
-        	//delete breakpoint from map
-        	this.addressBreakPoints.remove(n);
+        	Integer row = this.addressBreakPoints.get(n);
+        	if(row != null)
+        	{
+        		if(breakPointTable.getRowCount() > row)
+        		{
+        			breakPointTable.removeRow(row);
+        		}
+            	//delete breakpoint from map
+            	this.addressBreakPoints.remove(n);
+        	}
         }
         
         this.fireTableCellUpdated(n, -1);
@@ -226,6 +240,8 @@ public class Memory extends AbstractTableModel
             this.breakPoints[i] = false;
             this.nextBreakPoints[i] = false;
         }
+        
+		breakPointTable.setRowCount(0);
         
     	//delete breakpoint from map
     	this.addressBreakPoints.clear();
