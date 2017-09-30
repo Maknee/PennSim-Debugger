@@ -1,6 +1,3 @@
 reset
 as test test
 ld test
-set PC 0
-break set SUCCESS
-break set FAIL
