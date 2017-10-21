@@ -1,7 +1,6 @@
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Component;
-import java.awt.Cursor;
 import java.awt.Dimension;
 import java.awt.GridLayout;
 import java.awt.Image;
@@ -158,12 +157,33 @@ public class GUI implements ActionListener, TableModelListener {
 	 * Simple graph
 	 */
 	
+	private LC4Graph lc4Graph;
 	private JButton lc4Button;
 
 	/**
 	 * Disassembler/Grapher
 	 */
+	
+	private LC4Decompiler lc4Diassembler;
+	
+	private void setupDataPathPanel() {
+		this.dataPathPanel.setLayout(new BoxLayout(this.dataPathPanel, 2));
+		this.dataPathPanel.add(this.dataPath);
+		this.dataPathPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Datapath"),
+				BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+		this.dataPathPanel.setVisible(true);
+	}
+	
+	private void generateLc4Graph() {
+		lc4Graph = new LC4Graph();
+		lc4Graph.init(this.mac);
+	}
+	
+	private void generateLC4Diassembly()
+	{
+		lc4Diassembler = new LC4Decompiler(this.mac);
 
+	}
 
 	/**
 	 * Loads obj file?
@@ -250,7 +270,6 @@ public class GUI implements ActionListener, TableModelListener {
 		{
 			//Setup layout
 			this.setLayout(new BorderLayout());
-			this.setCursor(Cursor.getDefaultCursor());
 			
 			//Init panels
 			lineGoToPanel = new LineGoToPanel(gui, "Line Number:", "Go to line", "goto");
@@ -285,7 +304,6 @@ public class GUI implements ActionListener, TableModelListener {
 		{	
 			//Setup layout
 			this.setLayout(new BorderLayout());
-			this.setCursor(Cursor.getDefaultCursor());
 			
 			//Init label, text and button
 			lineNumberLabel = new JLabel(labelText);
@@ -326,7 +344,6 @@ public class GUI implements ActionListener, TableModelListener {
 		{
 			//Setup layout
 			this.setLayout(new BorderLayout());
-			this.setCursor(Cursor.getDefaultCursor());
 			
 			//Init memtable
 			memTable = new JTable(mac.getMemory()) {
@@ -335,21 +352,21 @@ public class GUI implements ActionListener, TableModelListener {
 					if (!addedOpcodeListener) {
 						this.addMouseListener(new MouseAdapter() {
 							public void mouseEntered(MouseEvent evt) {
-//								if (!opcodeFrame.isVisible()) {
-//									opcodeFrame.setVisible(true);
-//									opcodeFrame.setLocation(evt.getLocationOnScreen());
-//									opcodeFrame.toFront();
-//									opcodeFrame.requestFocus();
-//									opcodeFrame.repaint();
-//									Word word = null;
-//									if(memTable.rowAtPoint(evt.getPoint()) != -1)
-//										if(GUI.this.mac.getMemory().getWord(memTable.rowAtPoint(evt.getPoint())) != null)
-//											word = GUI.this.mac.getMemory().getWord(memTable.rowAtPoint(evt.getPoint()));
-//									if (word != null)
-//										if (ISA.getInstruction(word) != null)
-//											opcodeText.setText("Instruction: " + ISA.disassemble(word, 0, mac)
-//													+ " | Bits " + word.toBinary());
-//								}
+								if (!opcodeFrame.isVisible()) {
+									opcodeFrame.setVisible(true);
+									opcodeFrame.setLocation(evt.getLocationOnScreen());
+									opcodeFrame.toFront();
+									opcodeFrame.requestFocus();
+									opcodeFrame.repaint();
+									Word word = null;
+									if(memTable.rowAtPoint(evt.getPoint()) != -1)
+										if(GUI.this.mac.getMemory().getWord(memTable.rowAtPoint(evt.getPoint())) != null)
+											word = GUI.this.mac.getMemory().getWord(memTable.rowAtPoint(evt.getPoint()));
+									if (word != null)
+										if (ISA.getInstruction(word) != null)
+											opcodeText.setText("Instruction: " + ISA.disassemble(word, 0, mac)
+													+ " | Bits " + word.toBinary());
+								}
 							}
 	
 							public void mouseExited(MouseEvent evt) {
@@ -423,11 +440,6 @@ public class GUI implements ActionListener, TableModelListener {
 						super.tableChanged(tableModelEvent);
 					}
 				}
-				
-				@Override
-				public boolean isCellEditable(int row, int col) {
-					return col == 0;
-				}
 			};
 			
 			//Init memScrollPane
@@ -440,7 +452,7 @@ public class GUI implements ActionListener, TableModelListener {
 			
 			memTable.getModel().addTableModelListener(gui);
 			memTable.getModel().addTableModelListener((TableModelListener) memScrollPane.getVerticalScrollBar());
-			memTable.setPreferredScrollableViewportSize(new Dimension(220, 430));
+			memTable.setPreferredScrollableViewportSize(new Dimension(220, 480));
 			if (!PennSim.isDoubleBufferedVideo()) {
 				memTable.getModel().addTableModelListener(gui.devicePanel.GetVideo());
 			}
@@ -531,8 +543,7 @@ public class GUI implements ActionListener, TableModelListener {
 			//Init buttons
 			final JPanel buttonPanel = new JPanel();
 			buttonPanel.setLayout(new GridLayout(1, 7));
-			buttonPanel.setPreferredSize(new Dimension(1000, 25));
-
+			
 			//next
 			this.nextButton = new JButton(nextButtonCommand);
 			this.nextButton.setActionCommand(nextButtonCommand);
@@ -569,17 +580,17 @@ public class GUI implements ActionListener, TableModelListener {
 				@Override
 				public void actionPerformed(java.awt.event.ActionEvent evt) {
 					JOptionPane.showMessageDialog(frame,
-							"PennSim v2.2. \nIf any issues come up, please reach out to the TAs on Piazza",
+							"PennSim edited by Henry Zhu and Xuerui Fa. \nIf any issues come up, please reach out to the TAs on Piazza",
 							"About | Report", JOptionPane.INFORMATION_MESSAGE, null);
 					;
 				}
 			});
 			
 			//datapath
-//			this.dataPathButton = new JButton("Open DataPath Chart");
-//			this.dataPathButton.setActionCommand("DataPath");
-//			this.dataPathButton.addActionListener(gui);
-//			buttonPanel.add(this.dataPathButton);
+			this.dataPathButton = new JButton("Open DataPath Chart");
+			this.dataPathButton.setActionCommand("DataPath");
+			this.dataPathButton.addActionListener(gui);
+			buttonPanel.add(this.dataPathButton);
 
 
 			buttonPanel.add(this.aboutButton);
@@ -803,8 +814,8 @@ public class GUI implements ActionListener, TableModelListener {
 			
 			//Add the buttons to a panel
 			JPanel togglePanel = new JPanel(new BorderLayout());
-//			togglePanel.add(toggleUpdateButton, BorderLayout.NORTH);
-			togglePanel.add(toggleColorButton, BorderLayout.NORTH);
+			togglePanel.add(toggleUpdateButton, BorderLayout.NORTH);
+			togglePanel.add(toggleColorButton, BorderLayout.SOUTH);
 			
 			//Setup dump panels
 			this.dumpPanels = new ArrayList<DumpPanel>();
@@ -825,39 +836,38 @@ public class GUI implements ActionListener, TableModelListener {
 			dumpAndBreakpointsPanel = new JPanel(new BorderLayout());
 			this.dumpAndBreakpointsPanel.add(this.breakpointsPanel, BorderLayout.NORTH);
 			this.dumpAndBreakpointsPanel.add(this.dumpTabbedPanel, BorderLayout.SOUTH);
+			this.dumpAndBreakpointsPanel.setPreferredSize(new Dimension(300, 550));
 			
 			//Setup stack
-//			this.stackPanel = new JPanel(new BorderLayout());
-//			this.stackText = new JTextArea();
+			this.stackPanel = new JPanel(new BorderLayout());
+			this.stackText = new JTextArea();
 			
-//			this.stackPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Stack"),
-//					BorderFactory.createEmptyBorder(5, 5, 5, 5)));
-//			JScrollPane stackScrollPane = new JScrollPane(new StackTablePanel(gui));
-//			this.stackPanel.add(stackScrollPane, "North");
-//			stackScrollPane.setVerticalScrollBarPolicy(22);
-//			stackScrollPane.setHorizontalScrollBarPolicy(32);
-//			stackScrollPane.setPreferredSize(new Dimension(225, 480));
-//			this.stackText.setEditable(false);
-//			stackScrollPane.setVisible(true);
-//			
-//			//Setup the buttons
-//			this.lc4Button = new JButton("Generate Flow Chart/Graph/How your code looks like");
-//			this.stackPanel.add(lc4Button, "South");
-//			this.lc4Button.setActionCommand(lc4ButtonCommand);
-//			this.lc4Button.addActionListener(gui);
-//			
-//			this.lc4DisassemblerButton = new JButton("Diassemble LC4");
-//			this.stackPanel.add(lc4DisassemblerButton);
-//			this.lc4DisassemblerButton.setActionCommand(lc4DisassemblerButtonCommand);
-//			this.lc4DisassemblerButton.addActionListener(gui);
+			this.stackPanel.setBorder(BorderFactory.createCompoundBorder(BorderFactory.createTitledBorder("Stack"),
+					BorderFactory.createEmptyBorder(5, 5, 5, 5)));
+			JScrollPane stackScrollPane = new JScrollPane(new StackTablePanel(gui));
+			this.stackPanel.add(stackScrollPane, "North");
+			stackScrollPane.setVerticalScrollBarPolicy(22);
+			stackScrollPane.setHorizontalScrollBarPolicy(32);
+			stackScrollPane.setPreferredSize(new Dimension(225, 480));
+			this.stackText.setEditable(false);
+			stackScrollPane.setVisible(true);
 			
-//			final JSplitPane splitPane = new JSplitPane(1, true, this.dumpAndBreakpointsPanel, this.stackPanel);
+			//Setup the buttons
+			this.lc4Button = new JButton("Generate Flow Chart/Graph/How your code looks like");
+			this.stackPanel.add(lc4Button, "South");
+			this.lc4Button.setActionCommand(lc4ButtonCommand);
+			this.lc4Button.addActionListener(gui);
+			
+			this.lc4DisassemblerButton = new JButton("Diassemble LC4");
+			this.stackPanel.add(lc4DisassemblerButton);
+			this.lc4DisassemblerButton.setActionCommand(lc4DisassemblerButtonCommand);
+			this.lc4DisassemblerButton.addActionListener(gui);
+			
+			final JSplitPane splitPane = new JSplitPane(1, true, this.dumpAndBreakpointsPanel, this.stackPanel);
 			
 			//Add toggle button to the south
-			this.add(togglePanel, BorderLayout.CENTER);
-			this.add(this.dumpAndBreakpointsPanel, BorderLayout.NORTH);
-			this.setPreferredSize(this.getPreferredSize());
-
+			this.add(togglePanel, BorderLayout.SOUTH);
+			this.add(splitPane, BorderLayout.CENTER);
 		}
 		
 		public JToggleButton GetToggleUpdateButton()
@@ -880,7 +890,7 @@ public class GUI implements ActionListener, TableModelListener {
 		{
 			//Setup layout
 			this.setLayout(new BorderLayout());
-			this.setCursor(Cursor.getDefaultCursor());
+
 			//Init memDumpTable
 			this.memDumpTable = new JTable(mac.getMemory()) {
 				@Override
@@ -970,7 +980,7 @@ public class GUI implements ActionListener, TableModelListener {
 
 				@Override
 				public boolean isCellEditable(final int n, final int n2) {
-					return (n2 == 0);
+					return (n2 == 2);
 				}
 				
 			};
@@ -1035,7 +1045,6 @@ public class GUI implements ActionListener, TableModelListener {
 		DumpPanel(GUI gui, String commandText)
 		{
 			this.commandText = commandText;
-			this.setCursor(Cursor.getDefaultCursor());
 			
 			//Setup layout
 			this.setLayout(new BorderLayout());
@@ -1059,7 +1068,6 @@ public class GUI implements ActionListener, TableModelListener {
 		{
 			//Setup layout
 			this.setLayout(new BorderLayout());
-			this.setCursor(Cursor.getDefaultCursor());
 			
 			DefaultTableModel breakPointTable = new DefaultTableModel();
 			breakPointTable.addColumn("Address");
@@ -1084,7 +1092,7 @@ public class GUI implements ActionListener, TableModelListener {
 			this.memScrollPane.getVerticalScrollBar().setUnitIncrement(16);
 			this.memDumpTable.getModel().addTableModelListener(gui);
 			//this.memDumpTable.getModel().addTableModelListener((TableModelListener) this.memScrollPane.getVerticalScrollBar());
-			this.memDumpTable.setPreferredScrollableViewportSize(new Dimension(220, 100));
+			this.memDumpTable.setPreferredScrollableViewportSize(new Dimension(220, 200));
 			if (!PennSim.isDoubleBufferedVideo()) {
 				memDumpTable.getModel().addTableModelListener(gui.devicePanel.GetVideo());
 			}
@@ -1121,7 +1129,6 @@ public class GUI implements ActionListener, TableModelListener {
 		{
 			//Setup layout
 			this.setLayout(new BorderLayout());
-			this.setCursor(Cursor.getDefaultCursor());
 
 			//Init memDumpTable
 			this.memDumpTable = new JTable(mac.getMemory()) {
@@ -1263,7 +1270,7 @@ public class GUI implements ActionListener, TableModelListener {
 	//==========================================================================================
 
 	public GUI(final Machine mac, final CommandLine commandLine) {
-		this.frame = new JFrame("PennSim Debugger - " + PennSim.version + " - " + PennSim.getISA());
+		this.frame = new JFrame("PennSim Debugger - " + PennSim.version + " - " + PennSim.getISA() + " | edited by Henry Zhu");
 		this.dataPathFrame = new JFrame("PennSim - " + PennSim.version + " - " + PennSim.getISA());
 		this.fileChooser = new JFileChooser(".");
 		this.menuBar = new JMenuBar();
@@ -1344,6 +1351,7 @@ public class GUI implements ActionListener, TableModelListener {
 		this.resourceMenu.add(controlSignals1Item);
 		this.resourceMenu.add(controlSignals2Item);
 		
+		this.dataPath = new DataPath(mac, dataPathFrame);
 	}
 
 	public void setUpGUI() {
@@ -1385,6 +1393,7 @@ public class GUI implements ActionListener, TableModelListener {
 		this.menuBar.add(this.aboutMenu);
 		this.menuBar.add(this.resourceMenu);
 		this.frame.setJMenuBar(this.menuBar);
+		this.setupDataPathPanel();
 		
 		/**
 		 * INIT STUFF
@@ -1496,6 +1505,10 @@ public class GUI implements ActionListener, TableModelListener {
 					} else {
 						this.infoPanel.toggleColorButton.setText("Christmas Syntax Highlighting Disabled");
 					}
+				} else if ("generate graph".equals(actionEvent.getActionCommand())) {
+					this.generateLc4Graph();
+				} else if ("disassemble lc4".equals(actionEvent.getActionCommand())) {
+					this.generateLC4Diassembly();
 				} else if ("Instructions".equals(actionEvent.getActionCommand())) {
 					this.generateJPG("/resources/LC4_Instructions.jpg");
 				} else if ("Datapath".equals(actionEvent.getActionCommand())) {

@@ -2,13 +2,5 @@
 <classpath>
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER/org.eclipse.jdt.internal.debug.ui.launcher.StandardVMType/JavaSE-1.8"/>
-	<classpathentry kind="lib" path="/Users/xuerui/Desktop/Github/PennSim-Debugger/lib/antlr4-runtime-4.5.3.jar"/>
-	<classpathentry kind="lib" path="/Users/xuerui/Desktop/Github/PennSim-Debugger/lib/jgraph-5.13.0.0.jar"/>
-	<classpathentry kind="lib" path="/Users/xuerui/Desktop/Github/PennSim-Debugger/lib/jgrapht-core-1.0.0.jar"/>
-	<classpathentry kind="lib" path="/Users/xuerui/Desktop/Github/PennSim-Debugger/lib/jgrapht-demo-1.0.0.jar"/>
-	<classpathentry kind="lib" path="/Users/xuerui/Desktop/Github/PennSim-Debugger/lib/jgrapht-ext-1.0.0-uber.jar"/>
-	<classpathentry kind="lib" path="/Users/xuerui/Desktop/Github/PennSim-Debugger/lib/jgrapht-ext-1.0.0.jar"/>
-	<classpathentry kind="lib" path="/Users/xuerui/Desktop/Github/PennSim-Debugger/lib/jgraphx-2.0.0.1.jar"/>
-	<classpathentry kind="lib" path="/Users/xuerui/Desktop/Github/PennSim-Debugger/lib/jgraphx.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -1,3 +1,7 @@
+clear
 reset
-as test test
+as os os
+as test libc test
+ld os
 ld test
+
