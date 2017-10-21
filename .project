@@ -14,4 +14,16 @@
 	<natures>
 		<nature>org.eclipse.jdt.core.javanature</nature>
 	</natures>
+	<linkedResources>
+		<link>
+			<name>test.asm</name>
+			<type>1</type>
+			<locationURI>PROJECT_LOC/test.asm</locationURI>
+		</link>
+		<link>
+			<name>test.txt</name>
+			<type>1</type>
+			<locationURI>PROJECT_LOC/test.txt</locationURI>
+		</link>
+	</linkedResources>
 </projectDescription>
